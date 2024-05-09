@@ -1,7 +1,6 @@
 package server
 
 import (
-	"context"
 	"log"
 	"net/http"
 	"sync"
@@ -24,10 +23,13 @@ var sensors = map[string]Sensor{
 	"3": {Name: "3", Location: Coordinates{}, Tags: SensorTags{}},
 }
 
-func New() (server *Server) {
+func New(addr string) (server *Server) {
 	ginRouter := gin.Default()
 	server = &Server{
-		srv:    &http.Server{Handler: ginRouter},
+		srv: &http.Server{
+			Addr:    addr,
+			Handler: ginRouter,
+		},
 		router: ginRouter,
 		health: false,
 	}
@@ -50,14 +52,6 @@ func (s *Server) Serve() (err error) {
 }
 
 // TODO
-func (s *Server) Shutdown() {
-	log.Println("gracefully shutting down server")
-	s.SetStatus(false)
-	s.srv.Shutdown(context.Background())
-	log.Println("server successfully shutdown")
-}
-
-// TODO
 func (s *Server) SetStatus(health bool) {
 	s.Lock()
 	s.health = health
@@ -67,7 +61,7 @@ func (s *Server) SetStatus(health bool) {
 // TODO
 func (s *Server) setupRoutes() {
 	s.router.GET("/allsensors", s.ListSensors)
-	s.router.GET("/sensor:name", s.GetSensor)
+	s.router.GET("/sensor/:name", s.GetSensor)
 	s.router.POST("/sensor", s.InsertSensor)
 	s.router.PUT("/sensor", s.UpdateSensor)
 	s.router.GET("/nearest", s.NearestLocation)
