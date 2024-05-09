@@ -82,6 +82,13 @@ func main() {
 			Name:     "status",
 			Category: "client",
 			Action:   statusCheck,
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:    "endpoint",
+					Aliases: []string{"e"},
+					Value:   "http://localhost:8080/health",
+				},
+			},
 		},
 	}
 
@@ -101,18 +108,12 @@ func serve(c *cli.Context) (err error) {
 
 func listSensors(c *cli.Context) (err error) {
 	endpoint := c.String("endpoint")
-	var response *http.Response
-	if response, err = http.Get(endpoint); err != nil {
+	var responseString string
+	if responseString, err = get(endpoint); err != nil {
 		fmt.Println(err)
 		return err
 	}
-
-	var body []byte
-	if body, err = io.ReadAll(response.Body); err != nil {
-		fmt.Println(err)
-		return err
-	}
-	fmt.Println(string(body))
+	fmt.Println(responseString)
 	return nil
 }
 
@@ -121,19 +122,13 @@ func addSensor(c *cli.Context) (err error) {
 }
 
 func getSensor(c *cli.Context) (err error) {
-	var response *http.Response
 	url := fmt.Sprintf("%s/%s", c.String("endpoint"), c.String("name"))
-	if response, err = http.Get(url); err != nil {
+	var responseString string
+	if responseString, err = get(url); err != nil {
 		fmt.Println(err)
 		return err
 	}
-
-	var body []byte
-	if body, err = io.ReadAll(response.Body); err != nil {
-		fmt.Println(err)
-		return err
-	}
-	fmt.Println(string(body))
+	fmt.Println(responseString)
 	return nil
 }
 
@@ -142,5 +137,25 @@ func nearestSensor(c *cli.Context) (err error) {
 }
 
 func statusCheck(c *cli.Context) (err error) {
+	endpoint := c.String("endpoint")
+	var responseString string
+	if responseString, err = get(endpoint); err != nil {
+		fmt.Println(err)
+		return err
+	}
+	fmt.Println(responseString)
 	return nil
+}
+
+func get(url string) (_ string, err error) {
+	var response *http.Response
+	if response, err = http.Get(url); err != nil {
+		return "", err
+	}
+
+	var body []byte
+	if body, err = io.ReadAll(response.Body); err != nil {
+		return "", err
+	}
+	return string(body), nil
 }

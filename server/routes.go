@@ -27,8 +27,8 @@ type SensorTags struct {
 }
 
 type Status struct {
-	ok     bool
-	uptime string
+	Ok     bool   `json:"ok"`
+	Uptime string `json:"uptime"`
 }
 
 // TODO
@@ -127,11 +127,9 @@ func Haversine(user, sensor Coordinates) float64 {
 // since the server started and server version if
 // there was one.
 func (s *Server) Health(c *gin.Context) {
-	if s.health {
-		status := Status{
-			ok:     s.health,
-			uptime: time.Since(s.started).String(),
-		}
-		c.IndentedJSON(http.StatusOK, status)
+	status := Status{
+		Ok:     s.health,
+		Uptime: time.Since(s.started).String(),
 	}
+	c.IndentedJSON(http.StatusOK, status)
 }
