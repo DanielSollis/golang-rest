@@ -3,24 +3,53 @@ package server
 import (
 	"log"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
 type Server struct {
-	sync.RWMutex
 	srv     *http.Server // http server for API defaults
 	router  *gin.Engine  // the http handler
-	health  bool         // server state for health checks
+	healthy bool         // server state for health checks
 	started time.Time    // when the server started
 }
 
 var sensors = map[string]Sensor{
-	"1": {Name: "1", Location: Coordinates{}, Tags: SensorTags{}},
-	"2": {Name: "2", Location: Coordinates{}, Tags: SensorTags{}},
-	"3": {Name: "3", Location: Coordinates{}, Tags: SensorTags{}},
+	"1": {
+		Name: "1",
+		// Null Island off the coast of Africa
+		Location: Coordinates{
+			Latitude:  0,
+			Longitude: 0,
+		},
+		Tags: SensorTags{
+			Name: "foo",
+			Unit: "foo",
+		},
+	},
+	"2": {
+		Name: "2",
+		Location: Coordinates{
+			Latitude:  0,
+			Longitude: 0,
+		},
+		Tags: SensorTags{
+			Name: "foo",
+			Unit: "foo",
+		},
+	},
+	"3": {
+		Name: "3",
+		Location: Coordinates{
+			Latitude:  0,
+			Longitude: 0,
+		},
+		Tags: SensorTags{
+			Name: "foo",
+			Unit: "foo",
+		},
+	},
 }
 
 func New(addr string) (server *Server) {
@@ -30,8 +59,8 @@ func New(addr string) (server *Server) {
 			Addr:    addr,
 			Handler: ginRouter,
 		},
-		router: ginRouter,
-		health: false,
+		router:  ginRouter,
+		healthy: false,
 	}
 
 	server.setupRoutes()
@@ -40,7 +69,7 @@ func New(addr string) (server *Server) {
 
 // TODO
 func (s *Server) Serve() (err error) {
-	s.SetStatus(true)
+	s.healthy = true
 	s.started = time.Now()
 
 	log.Println("server starting")
@@ -49,13 +78,6 @@ func (s *Server) Serve() (err error) {
 	}
 
 	return nil
-}
-
-// TODO
-func (s *Server) SetStatus(health bool) {
-	s.Lock()
-	s.health = health
-	s.Unlock()
 }
 
 // TODO

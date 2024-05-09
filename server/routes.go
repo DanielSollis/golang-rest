@@ -118,7 +118,7 @@ func Haversine(user, sensor Coordinates) float64 {
 	// Calculate the angular between the two points 'c'
 	c := 2 * math.Asin(math.Sqrt(a))
 
-	earthsRadius := 6371
+	earthsRadius := 6371 // In km (approximately)
 	return float64(earthsRadius) * c
 }
 
@@ -128,7 +128,7 @@ func Haversine(user, sensor Coordinates) float64 {
 // there was one.
 func (s *Server) Health(c *gin.Context) {
 	status := Status{
-		Ok:     s.health,
+		Ok:     s.healthy,
 		Uptime: time.Since(s.started).String(),
 	}
 	c.IndentedJSON(http.StatusOK, status)

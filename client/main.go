@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -44,9 +46,29 @@ func main() {
 			Action:   addSensor,
 			Flags: []cli.Flag{
 				&cli.StringFlag{
-					Name:    "",
-					Aliases: []string{},
-					Usage:   "",
+					Name:    "endpoint",
+					Aliases: []string{"e"},
+					Value:   "http://localhost:8080/sensor",
+				},
+				&cli.StringFlag{
+					Name:     "name",
+					Aliases:  []string{"n"},
+					Required: true,
+				},
+				&cli.Float64Flag{
+					Name:     "lat",
+					Aliases:  []string{"a"},
+					Required: true,
+				},
+				&cli.Float64Flag{
+					Name:     "lon",
+					Aliases:  []string{"o"},
+					Required: true,
+				},
+				&cli.StringFlag{
+					Name:     "unit",
+					Aliases:  []string{"u"},
+					Required: true,
 				},
 			},
 		},
@@ -109,7 +131,7 @@ func serve(c *cli.Context) (err error) {
 func listSensors(c *cli.Context) (err error) {
 	endpoint := c.String("endpoint")
 	var responseString string
-	if responseString, err = get(endpoint); err != nil {
+	if responseString, err = endpointGet(endpoint); err != nil {
 		fmt.Println(err)
 		return err
 	}
@@ -118,13 +140,45 @@ func listSensors(c *cli.Context) (err error) {
 }
 
 func addSensor(c *cli.Context) (err error) {
+	sensor := server.Sensor{
+		Name: c.String("name"),
+		Location: server.Coordinates{
+			Latitude:  c.Float64("lat"),
+			Longitude: c.Float64("lat"),
+		},
+		Tags: server.SensorTags{
+			Name: c.String("name"),
+			Unit: c.String("unit"),
+		},
+	}
+
+	var jsonBytes []byte
+	if jsonBytes, err = json.Marshal(sensor); err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	url := c.String("endpoint")
+	requestBody := bytes.NewBuffer(jsonBytes)
+	var response *http.Response
+	if response, err = http.Post(url, "application/json", requestBody); err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	var responseBody []byte
+	if responseBody, err = io.ReadAll(response.Body); err != nil {
+		fmt.Println(err)
+		return err
+	}
+	fmt.Println(string(responseBody))
 	return nil
 }
 
 func getSensor(c *cli.Context) (err error) {
 	url := fmt.Sprintf("%s/%s", c.String("endpoint"), c.String("name"))
 	var responseString string
-	if responseString, err = get(url); err != nil {
+	if responseString, err = endpointGet(url); err != nil {
 		fmt.Println(err)
 		return err
 	}
@@ -139,7 +193,7 @@ func nearestSensor(c *cli.Context) (err error) {
 func statusCheck(c *cli.Context) (err error) {
 	endpoint := c.String("endpoint")
 	var responseString string
-	if responseString, err = get(endpoint); err != nil {
+	if responseString, err = endpointGet(endpoint); err != nil {
 		fmt.Println(err)
 		return err
 	}
@@ -147,7 +201,7 @@ func statusCheck(c *cli.Context) (err error) {
 	return nil
 }
 
-func get(url string) (_ string, err error) {
+func endpointGet(url string) (_ string, err error) {
 	var response *http.Response
 	if response, err = http.Get(url); err != nil {
 		return "", err
