@@ -3,6 +3,7 @@ package server
 import (
 	"math"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -25,13 +26,18 @@ type SensorTags struct {
 	Name      string `json:"name"`
 }
 
+type Status struct {
+	ok     bool
+	uptime string
+}
+
 // TODO
 func (s *Server) ListSensors(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, sensors)
 }
 
 // TODO
-func (s *Server) InsertMetadata(c *gin.Context) {
+func (s *Server) InsertSensor(c *gin.Context) {
 	var newSensor Sensor
 	if err := c.BindJSON(&newSensor); err != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "sensor data incorrectly formated"})
@@ -43,12 +49,12 @@ func (s *Server) InsertMetadata(c *gin.Context) {
 }
 
 // TODO
-func (s *Server) UpdateMetadata(c *gin.Context) {
+func (s *Server) UpdateSensor(c *gin.Context) {
 	// TODO: implement
 }
 
 // TODO
-func (s *Server) GetMetadata(c *gin.Context) {
+func (s *Server) GetSensor(c *gin.Context) {
 	name := c.Param("name")
 	if sensor, ok := sensors[name]; ok {
 		c.IndentedJSON(http.StatusOK, sensor)
@@ -116,12 +122,16 @@ func Haversine(user, sensor Coordinates) float64 {
 	return float64(earthsRadius) * c
 }
 
-// TODO
+// Health check for server. Usually It would be
+// best practice to include other info here like time
+// since the server started and server version if
+// there was one.
 func (s *Server) Health(c *gin.Context) {
 	if s.health {
-		// Usually It would be a good idea to include other
-		// info here like time since the server started and
-		// server version if there was one.
-		c.IndentedJSON(http.StatusOK, s.health)
+		status := Status{
+			ok:     s.health,
+			uptime: time.Since(s.started).String(),
+		}
+		c.IndentedJSON(http.StatusOK, status)
 	}
 }

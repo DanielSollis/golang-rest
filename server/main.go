@@ -1,9 +1,11 @@
 package server
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -13,7 +15,7 @@ type Server struct {
 	srv     *http.Server // http server for API defaults
 	router  *gin.Engine  // the http handler
 	health  bool         // server state for health checks
-	errChan chan error   // synchronize gracefull shutdown
+	started time.Time    // when the server started
 }
 
 var sensors = map[string]Sensor{
@@ -22,22 +24,41 @@ var sensors = map[string]Sensor{
 	"3": {Name: "3", Location: Coordinates{}, Tags: SensorTags{}},
 }
 
-// TODO
-func (s *Server) serve() {
-	s.setStatus(true)
+func New() (server *Server) {
+	ginRouter := gin.Default()
+	server = &Server{
+		srv:    &http.Server{Handler: ginRouter},
+		router: ginRouter,
+		health: false,
+	}
+
+	server.setupRoutes()
+	return server
 }
 
 // TODO
-func (s *Server) shutdown() {
-	// if this is more complicated, return errors, lock, etc.
+func (s *Server) Serve() (err error) {
+	s.SetStatus(true)
+	s.started = time.Now()
 
-	log.Println("Gracefully shutting down server")
-	s.setStatus(false)
-	log.Println("Server successfully shutdown")
+	log.Println("server starting")
+	if err = s.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		return err
+	}
+
+	return nil
 }
 
 // TODO
-func (s *Server) setStatus(health bool) {
+func (s *Server) Shutdown() {
+	log.Println("gracefully shutting down server")
+	s.SetStatus(false)
+	s.srv.Shutdown(context.Background())
+	log.Println("server successfully shutdown")
+}
+
+// TODO
+func (s *Server) SetStatus(health bool) {
 	s.Lock()
 	s.health = health
 	s.Unlock()
@@ -46,14 +67,9 @@ func (s *Server) setStatus(health bool) {
 // TODO
 func (s *Server) setupRoutes() {
 	s.router.GET("/allsensors", s.ListSensors)
-	s.router.POST("/sensor", s.InsertMetadata)
-	s.router.PUT("/sensor", s.UpdateMetadata)
-	s.router.GET("/sensor:name", s.GetMetadata)
+	s.router.GET("/sensor:name", s.GetSensor)
+	s.router.POST("/sensor", s.InsertSensor)
+	s.router.PUT("/sensor", s.UpdateSensor)
 	s.router.GET("/nearest", s.NearestLocation)
 	s.router.GET("/health", s.Health)
-}
-
-// TODO
-func main() {
-
 }
