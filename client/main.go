@@ -232,12 +232,12 @@ func postEndpoint(url string, toMarshal interface{}) (_ string, err error) {
 	return string(responseBody), nil
 }
 
-func createSensor(name, unit string, lat, long float64) *server.Sensor {
+func createSensor(name, unit string, lat, lon float64) *server.Sensor {
 	return &server.Sensor{
 		Name: name,
 		Location: server.Coordinates{
 			Latitude:  lat,
-			Longitude: long,
+			Longitude: lon,
 		},
 		Tags: server.SensorTags{
 			Name: name,

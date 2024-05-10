@@ -1,33 +1,57 @@
-package server
+package server_test
 
 import (
+	"math"
+	"pingthings/server"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-func (s *Server) TestListSensors(t *testing.T) {
+func TestListSensors(t *testing.T) {
 	// TODO
 }
 
-func (s *Server) TestInsertMetadata(t *testing.T) {
+func TestAddSensor(t *testing.T) {
 	// TODO
 }
 
-func (s *Server) TestUpdateMetadata(t *testing.T) {
+func TestGetSensor(t *testing.T) {
 	// TODO
 }
 
-func (s *Server) TestGetMetadata(t *testing.T) {
+func TestNearestSensor(t *testing.T) {
 	// TODO
 }
 
-func (s *Server) TestNearestLocation(t *testing.T) {
-	// TODO
+func TestStatusCheck(t *testing.T) {
+
 }
 
 func TestHaversine(t *testing.T) {
-	// TODO
-}
+	// test one
+	userCoordinates := server.Coordinates{
+		Latitude:  0,
+		Longitude: 0,
+	}
+	sensorCoordinates := server.Coordinates{
+		Latitude:  0,
+		Longitude: 180,
+	}
+	distance := server.Haversine(userCoordinates, sensorCoordinates)
+	expected := 20015
+	assert.EqualValues(t, expected, math.Round(distance))
 
-func (s *Server) TestHealth(t *testing.T) {
-	// TODO
+	// Test two
+	userCoordinates = server.Coordinates{
+		Latitude:  51.5007,
+		Longitude: 0.1246,
+	}
+	sensorCoordinates = server.Coordinates{
+		Latitude:  40.6892,
+		Longitude: 74.0445,
+	}
+	distance = server.Haversine(userCoordinates, sensorCoordinates)
+	expected = 5575
+	assert.EqualValues(t, expected, math.Round(distance))
 }

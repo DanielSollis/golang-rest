@@ -92,11 +92,11 @@ func (s *Server) nearestSensor(c *gin.Context) {
 // can be up to 0.5%
 func Haversine(user, sensor Coordinates) float64 {
 	userLat, sensorLat := user.Latitude, sensor.Latitude
-	userLong, sensorLong := user.Longitude, sensor.Longitude
+	userLon, sensorLon := user.Longitude, sensor.Longitude
 
 	// Distance between latitudes in radians
 	latDistanceRad := (sensorLat - userLat) * math.Pi / 180
-	longDistanceRad := (sensorLong - userLong) * math.Pi / 180
+	lonDistanceRad := (sensorLon - userLon) * math.Pi / 180
 
 	// Latitudes in radians
 	userLatRad := userLat * math.Pi / 180
@@ -104,9 +104,9 @@ func Haversine(user, sensor Coordinates) float64 {
 
 	// Calculate the square of half the chord length between two points 'a'
 	latPower := math.Pow(math.Sin(latDistanceRad/2), 2)
-	longPower := math.Pow(math.Sin(longDistanceRad/2), 2)
+	lonPower := math.Pow(math.Sin(lonDistanceRad/2), 2)
 	latCosine := math.Cos(userLatRad) * math.Cos(sensorLatRad)
-	a := (latPower + longPower) * latCosine
+	a := latPower + lonPower*latCosine
 
 	// Calculate the angular between the two points 'c'
 	c := 2 * math.Asin(math.Sqrt(a))
