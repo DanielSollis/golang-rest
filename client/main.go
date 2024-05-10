@@ -129,9 +129,9 @@ func serve(c *cli.Context) (err error) {
 }
 
 func listSensors(c *cli.Context) (err error) {
-	endpoint := c.String("endpoint")
+	url := c.String("endpoint")
 	var responseString string
-	if responseString, err = endpointGet(endpoint); err != nil {
+	if responseString, err = getEndpoint(url); err != nil {
 		fmt.Println(err)
 		return err
 	}
@@ -140,45 +140,13 @@ func listSensors(c *cli.Context) (err error) {
 }
 
 func addSensor(c *cli.Context) (err error) {
-	sensor := server.Sensor{
-		Name: c.String("name"),
-		Location: server.Coordinates{
-			Latitude:  c.Float64("lat"),
-			Longitude: c.Float64("lat"),
-		},
-		Tags: server.SensorTags{
-			Name: c.String("name"),
-			Unit: c.String("unit"),
-		},
-	}
+	name, unit := c.String("name"), c.String("unit")
+	lat, lon := c.Float64("lat"), c.Float64("lon")
+	sensor := createSensor(name, unit, lat, lon)
 
-	var jsonBytes []byte
-	if jsonBytes, err = json.Marshal(sensor); err != nil {
-		fmt.Println(err)
-		return err
-	}
-
-	url := c.String("endpoint")
-	requestBody := bytes.NewBuffer(jsonBytes)
-	var response *http.Response
-	if response, err = http.Post(url, "application/json", requestBody); err != nil {
-		fmt.Println(err)
-		return err
-	}
-
-	var responseBody []byte
-	if responseBody, err = io.ReadAll(response.Body); err != nil {
-		fmt.Println(err)
-		return err
-	}
-	fmt.Println(string(responseBody))
-	return nil
-}
-
-func getSensor(c *cli.Context) (err error) {
-	url := fmt.Sprintf("%s/%s", c.String("endpoint"), c.String("name"))
 	var responseString string
-	if responseString, err = endpointGet(url); err != nil {
+	url := c.String("endpoint")
+	if responseString, err = postEndpoint(url, sensor); err != nil {
 		fmt.Println(err)
 		return err
 	}
@@ -186,6 +154,19 @@ func getSensor(c *cli.Context) (err error) {
 	return nil
 }
 
+func getSensor(c *cli.Context) (err error) {
+	var responseString string
+	endpoint, name := c.String("endpoint"), c.String("name")
+	url := fmt.Sprintf("%s/%s", endpoint, name)
+	if responseString, err = getEndpoint(url); err != nil {
+		fmt.Println(err)
+		return err
+	}
+	fmt.Println(responseString)
+	return nil
+}
+
+// TODO
 func nearestSensor(c *cli.Context) (err error) {
 	return nil
 }
@@ -193,7 +174,7 @@ func nearestSensor(c *cli.Context) (err error) {
 func statusCheck(c *cli.Context) (err error) {
 	endpoint := c.String("endpoint")
 	var responseString string
-	if responseString, err = endpointGet(endpoint); err != nil {
+	if responseString, err = getEndpoint(endpoint); err != nil {
 		fmt.Println(err)
 		return err
 	}
@@ -201,7 +182,7 @@ func statusCheck(c *cli.Context) (err error) {
 	return nil
 }
 
-func endpointGet(url string) (_ string, err error) {
+func getEndpoint(url string) (_ string, err error) {
 	var response *http.Response
 	if response, err = http.Get(url); err != nil {
 		return "", err
@@ -212,4 +193,37 @@ func endpointGet(url string) (_ string, err error) {
 		return "", err
 	}
 	return string(body), nil
+}
+
+func postEndpoint(url string, toMarshal interface{}) (_ string, err error) {
+	var jsonBytes []byte
+	if jsonBytes, err = json.Marshal(toMarshal); err != nil {
+		return "", err
+	}
+
+	var response *http.Response
+	requestBody := bytes.NewBuffer(jsonBytes)
+	if response, err = http.Post(url, "application/json", requestBody); err != nil {
+		return "", err
+	}
+
+	var responseBody []byte
+	if responseBody, err = io.ReadAll(response.Body); err != nil {
+		return "", err
+	}
+	return string(responseBody), nil
+}
+
+func createSensor(name, unit string, lat, long float64) *server.Sensor {
+	return &server.Sensor{
+		Name: name,
+		Location: server.Coordinates{
+			Latitude:  lat,
+			Longitude: long,
+		},
+		Tags: server.SensorTags{
+			Name: name,
+			Unit: unit,
+		},
+	}
 }

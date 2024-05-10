@@ -16,38 +16,46 @@ type Server struct {
 }
 
 var sensors = map[string]Sensor{
-	"1": {
-		Name: "1",
+	"L1MAG": {
+		Name: "L1MAG",
 		// Null Island off the coast of Africa
 		Location: Coordinates{
 			Latitude:  0,
 			Longitude: 0,
 		},
 		Tags: SensorTags{
-			Name: "foo",
-			Unit: "foo",
+			Name:      "L1MAG",
+			Unit:      "volts",
+			Ingress:   "",
+			Distiller: "",
 		},
 	},
-	"2": {
-		Name: "2",
+	"L1ANG": {
+		Name: "L1ANG",
+		// Disneyland, Anaheim
 		Location: Coordinates{
-			Latitude:  0,
-			Longitude: 0,
+			Latitude:  33.8,
+			Longitude: 117.9,
 		},
 		Tags: SensorTags{
-			Name: "foo",
-			Unit: "foo",
+			Name:      "L1ANG",
+			Unit:      "deg",
+			Ingress:   "",
+			Distiller: "",
 		},
 	},
-	"3": {
-		Name: "3",
+	"C1MAG": {
+		Name: "C1MAG",
+		// Hobbiton, New Zealand
 		Location: Coordinates{
-			Latitude:  0,
-			Longitude: 0,
+			Latitude:  37.8,
+			Longitude: 175.7,
 		},
 		Tags: SensorTags{
-			Name: "foo",
-			Unit: "foo",
+			Name:      "C1MAG",
+			Unit:      "amps",
+			Ingress:   "",
+			Distiller: "",
 		},
 	},
 }
