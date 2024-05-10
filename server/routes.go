@@ -80,8 +80,10 @@ func (s *Server) NearestSensor(c *gin.Context) {
 	userCoordinates := Coordinates{Latitude: latitude, Longitude: longitude}
 	for _, sensor := range sensors {
 		distance := Haversine(userCoordinates, sensor.Location)
-		min = math.Min(min, distance)
-		minSensor = sensor
+		if distance < min {
+			min = distance
+			minSensor = sensor
+		}
 	}
 	c.IndentedJSON(http.StatusOK, minSensor)
 }

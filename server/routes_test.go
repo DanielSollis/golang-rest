@@ -1,8 +1,11 @@
 package server_test
 
 import (
+	"bytes"
+	"encoding/json"
 	"io"
 	"math"
+	"net/http"
 	"net/http/httptest"
 	"pingthings/server"
 	"testing"
@@ -20,7 +23,7 @@ type testSuite struct {
 
 func (suite *testSuite) SetupTest() {
 	suite.setupRecorder()
-	suite.srv = *server.New("foo")
+	suite.srv = *server.New("fakeaddress")
 }
 
 func (suite *testSuite) setupRecorder() {
@@ -43,7 +46,32 @@ func (suite *testSuite) TestListSensors() {
 }
 
 func (suite *testSuite) TestAddSensor() {
-	// TODO
+	suite.testContext.Request = &http.Request{
+		Header: make(http.Header),
+	}
+	suite.testContext.Request.Method = "POST"
+	suite.testContext.Request.Header.Set("Content-Type", "application/json")
+
+	sensor := &server.Sensor{
+		Name: "foo",
+		Location: server.Coordinates{
+			Latitude:  0,
+			Longitude: 0,
+		},
+		Tags: server.SensorTags{
+			Name: "foo",
+			Unit: "bar",
+		},
+	}
+	bodyBytes, err := json.Marshal(sensor)
+	if err != nil {
+		panic(err)
+	}
+	body := bytes.NewBuffer(bodyBytes)
+	suite.testContext.Request.Body = io.NopCloser(body)
+
+	suite.srv.AddSensor(suite.testContext)
+	suite.Equal(201, suite.responseRecorder.Code)
 }
 
 func (suite *testSuite) TestGetSensor() {
@@ -64,7 +92,44 @@ func (suite *testSuite) TestGetSensor() {
 }
 
 func (suite *testSuite) TestNearestSensor() {
-	// TODO
+	suite.testContext.Params = []gin.Param{
+		{
+			Key:   "lat",
+			Value: "30",
+		},
+		{
+			Key:   "lon",
+			Value: "100",
+		},
+	}
+	suite.srv.NearestSensor(suite.testContext)
+	suite.Equal(200, suite.responseRecorder.Code)
+
+	body, err := io.ReadAll(suite.responseRecorder.Body)
+	suite.Nil(err)
+
+	var responseSensor server.Sensor
+	suite.Nil(json.Unmarshal(body, &responseSensor))
+	suite.Equal(responseSensor.Name, "L1ANG")
+
+	suite.testContext.Params = []gin.Param{
+		{
+			Key:   "lat",
+			Value: "40",
+		},
+		{
+			Key:   "lon",
+			Value: "170",
+		},
+	}
+	suite.srv.NearestSensor(suite.testContext)
+	suite.Equal(200, suite.responseRecorder.Code)
+
+	body, err = io.ReadAll(suite.responseRecorder.Body)
+	suite.Nil(err)
+
+	suite.Nil(json.Unmarshal(body, &responseSensor))
+	suite.Equal(responseSensor.Name, "C1MAG")
 }
 
 func (suite *testSuite) TestStatusCheck() {
