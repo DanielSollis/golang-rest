@@ -4,7 +4,6 @@ go 1.22.0
 
 require (
 	github.com/gin-gonic/gin v1.10.0
-	github.com/go-playground/assert/v2 v2.2.0
 	github.com/stretchr/testify v1.9.0
 	github.com/urfave/cli/v2 v2.27.2
 )

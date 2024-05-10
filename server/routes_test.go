@@ -1,4 +1,4 @@
-package server_test
+package server
 
 import (
 	"bytes"
@@ -7,7 +7,6 @@ import (
 	"math"
 	"net/http"
 	"net/http/httptest"
-	"pingthings/server"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -16,14 +15,15 @@ import (
 
 type testSuite struct {
 	suite.Suite
-	srv              server.Server
+	srv              Server
 	responseRecorder *httptest.ResponseRecorder
 	testContext      *gin.Context
 }
 
 func (suite *testSuite) SetupTest() {
+	gin.SetMode(gin.TestMode)
 	suite.setupRecorder()
-	suite.srv = *server.New("fakeaddress")
+	suite.srv = *New("fakeaddress")
 }
 
 func (suite *testSuite) setupRecorder() {
@@ -37,7 +37,7 @@ func TestExampleTestSuite(t *testing.T) {
 }
 
 func (suite *testSuite) TestListSensors() {
-	suite.srv.ListSensors(suite.testContext)
+	suite.srv.listSensors(suite.testContext)
 	suite.Equal(200, suite.responseRecorder.Code)
 
 	body, err := io.ReadAll(suite.responseRecorder.Body)
@@ -52,13 +52,13 @@ func (suite *testSuite) TestAddSensor() {
 	suite.testContext.Request.Method = "POST"
 	suite.testContext.Request.Header.Set("Content-Type", "application/json")
 
-	sensor := &server.Sensor{
+	sensor := &Sensor{
 		Name: "foo",
-		Location: server.Coordinates{
+		Location: Coordinates{
 			Latitude:  0,
 			Longitude: 0,
 		},
-		Tags: server.SensorTags{
+		Tags: SensorTags{
 			Name: "foo",
 			Unit: "bar",
 		},
@@ -70,7 +70,7 @@ func (suite *testSuite) TestAddSensor() {
 	body := bytes.NewBuffer(bodyBytes)
 	suite.testContext.Request.Body = io.NopCloser(body)
 
-	suite.srv.AddSensor(suite.testContext)
+	suite.srv.addSensor(suite.testContext)
 	suite.Equal(201, suite.responseRecorder.Code)
 }
 
@@ -79,7 +79,7 @@ func (suite *testSuite) TestGetSensor() {
 		Key:   "name",
 		Value: "L1MAG",
 	}}
-	suite.srv.GetSensor(suite.testContext)
+	suite.srv.getSensor(suite.testContext)
 	suite.Equal(200, suite.responseRecorder.Code)
 
 	suite.setupRecorder()
@@ -87,7 +87,7 @@ func (suite *testSuite) TestGetSensor() {
 		Key:   "name",
 		Value: "NOTASENSOR",
 	}}
-	suite.srv.GetSensor(suite.testContext)
+	suite.srv.getSensor(suite.testContext)
 	suite.Equal(404, suite.responseRecorder.Code)
 }
 
@@ -102,13 +102,13 @@ func (suite *testSuite) TestNearestSensor() {
 			Value: "100",
 		},
 	}
-	suite.srv.NearestSensor(suite.testContext)
+	suite.srv.nearestSensor(suite.testContext)
 	suite.Equal(200, suite.responseRecorder.Code)
 
 	body, err := io.ReadAll(suite.responseRecorder.Body)
 	suite.Nil(err)
 
-	var responseSensor server.Sensor
+	var responseSensor Sensor
 	suite.Nil(json.Unmarshal(body, &responseSensor))
 	suite.Equal(responseSensor.Name, "L1ANG")
 
@@ -122,7 +122,7 @@ func (suite *testSuite) TestNearestSensor() {
 			Value: "170",
 		},
 	}
-	suite.srv.NearestSensor(suite.testContext)
+	suite.srv.nearestSensor(suite.testContext)
 	suite.Equal(200, suite.responseRecorder.Code)
 
 	body, err = io.ReadAll(suite.responseRecorder.Body)
@@ -133,34 +133,34 @@ func (suite *testSuite) TestNearestSensor() {
 }
 
 func (suite *testSuite) TestStatusCheck() {
-	suite.srv.StatusCheck(suite.testContext)
+	suite.srv.statusCheck(suite.testContext)
 	suite.Equal(200, suite.responseRecorder.Code)
 }
 
 func (suite *testSuite) TestHaversine() {
 	// test one
-	userCoordinates := server.Coordinates{
+	userCoordinates := Coordinates{
 		Latitude:  0,
 		Longitude: 0,
 	}
-	sensorCoordinates := server.Coordinates{
+	sensorCoordinates := Coordinates{
 		Latitude:  0,
 		Longitude: 180,
 	}
-	distance := server.Haversine(userCoordinates, sensorCoordinates)
+	distance := haversine(userCoordinates, sensorCoordinates)
 	expected := 20015
 	suite.EqualValues(expected, math.Round(distance))
 
 	// Test two
-	userCoordinates = server.Coordinates{
+	userCoordinates = Coordinates{
 		Latitude:  51.5007,
 		Longitude: 0.1246,
 	}
-	sensorCoordinates = server.Coordinates{
+	sensorCoordinates = Coordinates{
 		Latitude:  40.6892,
 		Longitude: 74.0445,
 	}
-	distance = server.Haversine(userCoordinates, sensorCoordinates)
+	distance = haversine(userCoordinates, sensorCoordinates)
 	expected = 5575
 	suite.EqualValues(expected, math.Round(distance))
 }

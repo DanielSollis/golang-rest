@@ -88,9 +88,9 @@ func (s *Server) Serve() (err error) {
 }
 
 func (s *Server) setupRoutes() {
-	s.router.GET("/allsensors", s.ListSensors)
-	s.router.POST("/sensor", s.AddSensor)
-	s.router.GET("/sensor/:name", s.GetSensor)
-	s.router.GET("/nearest/:lat/:lon", s.NearestSensor)
-	s.router.GET("/health", s.StatusCheck)
+	s.router.GET("/allsensors", s.listSensors)
+	s.router.POST("/sensor", s.addSensor)
+	s.router.GET("/sensor/:name", s.getSensor)
+	s.router.GET("/nearest/:lat/:lon", s.nearestSensor)
+	s.router.GET("/health", s.statusCheck)
 }

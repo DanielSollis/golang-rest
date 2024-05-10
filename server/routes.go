@@ -27,11 +27,11 @@ type SensorTags struct {
 	Name      string `json:"name"`
 }
 
-func (s *Server) ListSensors(c *gin.Context) {
+func (s *Server) listSensors(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, sensors)
 }
 
-func (s *Server) AddSensor(c *gin.Context) {
+func (s *Server) addSensor(c *gin.Context) {
 	var newSensor Sensor
 	if err := c.BindJSON(&newSensor); err != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "sensor data incorrectly formated"})
@@ -42,7 +42,7 @@ func (s *Server) AddSensor(c *gin.Context) {
 	c.IndentedJSON(http.StatusCreated, newSensor)
 }
 
-func (s *Server) GetSensor(c *gin.Context) {
+func (s *Server) getSensor(c *gin.Context) {
 	name := c.Param("name")
 	if sensor, ok := sensors[name]; ok {
 		c.IndentedJSON(http.StatusOK, sensor)
@@ -51,7 +51,7 @@ func (s *Server) GetSensor(c *gin.Context) {
 	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "Sensor not found in store"})
 }
 
-func (s *Server) NearestSensor(c *gin.Context) {
+func (s *Server) nearestSensor(c *gin.Context) {
 	latstring, lonstring := c.Param("lat"), c.Param("lon")
 
 	var err error
@@ -79,7 +79,7 @@ func (s *Server) NearestSensor(c *gin.Context) {
 	var minSensor Sensor
 	userCoordinates := Coordinates{Latitude: latitude, Longitude: longitude}
 	for _, sensor := range sensors {
-		distance := Haversine(userCoordinates, sensor.Location)
+		distance := haversine(userCoordinates, sensor.Location)
 		if distance < min {
 			min = distance
 			minSensor = sensor
@@ -92,7 +92,7 @@ func (s *Server) NearestSensor(c *gin.Context) {
 // The haversine formula assumes points on a perfect sphere
 // (the earth isn't a perfect sphere) so the haversine error
 // can be up to 0.5%
-func Haversine(user, sensor Coordinates) float64 {
+func haversine(user, sensor Coordinates) float64 {
 	userLat, sensorLat := user.Latitude, sensor.Latitude
 	userLon, sensorLon := user.Longitude, sensor.Longitude
 
@@ -124,7 +124,7 @@ type Status struct {
 
 // Health check for server. Usually It would we
 // should include the server version if there was one.
-func (s *Server) StatusCheck(c *gin.Context) {
+func (s *Server) statusCheck(c *gin.Context) {
 	status := Status{
 		Ok:     s.healthy,
 		Uptime: time.Since(s.started).String(),
