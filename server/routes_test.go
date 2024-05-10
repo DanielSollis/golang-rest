@@ -1,34 +1,78 @@
 package server_test
 
 import (
+	"io"
 	"math"
+	"net/http/httptest"
 	"pingthings/server"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/suite"
 )
 
-func TestListSensors(t *testing.T) {
+type testSuite struct {
+	suite.Suite
+	srv              server.Server
+	responseRecorder *httptest.ResponseRecorder
+	testContext      *gin.Context
+}
+
+func (suite *testSuite) SetupTest() {
+	suite.setupRecorder()
+	suite.srv = *server.New("foo")
+}
+
+func (suite *testSuite) setupRecorder() {
+	recorder := httptest.NewRecorder()
+	suite.responseRecorder = recorder
+	suite.testContext, _ = gin.CreateTestContext(recorder)
+}
+
+func TestExampleTestSuite(t *testing.T) {
+	suite.Run(t, new(testSuite))
+}
+
+func (suite *testSuite) TestListSensors() {
+	suite.srv.ListSensors(suite.testContext)
+	suite.Equal(200, suite.responseRecorder.Code)
+
+	body, err := io.ReadAll(suite.responseRecorder.Body)
+	suite.Nil(err)
+	suite.NotNil(body)
+}
+
+func (suite *testSuite) TestAddSensor() {
 	// TODO
 }
 
-func TestAddSensor(t *testing.T) {
+func (suite *testSuite) TestGetSensor() {
+	suite.testContext.Params = []gin.Param{{
+		Key:   "name",
+		Value: "L1MAG",
+	}}
+	suite.srv.GetSensor(suite.testContext)
+	suite.Equal(200, suite.responseRecorder.Code)
+
+	suite.setupRecorder()
+	suite.testContext.Params = []gin.Param{{
+		Key:   "name",
+		Value: "NOTASENSOR",
+	}}
+	suite.srv.GetSensor(suite.testContext)
+	suite.Equal(404, suite.responseRecorder.Code)
+}
+
+func (suite *testSuite) TestNearestSensor() {
 	// TODO
 }
 
-func TestGetSensor(t *testing.T) {
-	// TODO
+func (suite *testSuite) TestStatusCheck() {
+	suite.srv.StatusCheck(suite.testContext)
+	suite.Equal(200, suite.responseRecorder.Code)
 }
 
-func TestNearestSensor(t *testing.T) {
-	// TODO
-}
-
-func TestStatusCheck(t *testing.T) {
-
-}
-
-func TestHaversine(t *testing.T) {
+func (suite *testSuite) TestHaversine() {
 	// test one
 	userCoordinates := server.Coordinates{
 		Latitude:  0,
@@ -40,7 +84,7 @@ func TestHaversine(t *testing.T) {
 	}
 	distance := server.Haversine(userCoordinates, sensorCoordinates)
 	expected := 20015
-	assert.EqualValues(t, expected, math.Round(distance))
+	suite.EqualValues(expected, math.Round(distance))
 
 	// Test two
 	userCoordinates = server.Coordinates{
@@ -53,5 +97,5 @@ func TestHaversine(t *testing.T) {
 	}
 	distance = server.Haversine(userCoordinates, sensorCoordinates)
 	expected = 5575
-	assert.EqualValues(t, expected, math.Round(distance))
+	suite.EqualValues(expected, math.Round(distance))
 }

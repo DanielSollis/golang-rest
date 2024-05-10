@@ -27,11 +27,11 @@ type SensorTags struct {
 	Name      string `json:"name"`
 }
 
-func (s *Server) listSensors(c *gin.Context) {
+func (s *Server) ListSensors(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, sensors)
 }
 
-func (s *Server) addSensor(c *gin.Context) {
+func (s *Server) AddSensor(c *gin.Context) {
 	var newSensor Sensor
 	if err := c.BindJSON(&newSensor); err != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "sensor data incorrectly formated"})
@@ -46,12 +46,12 @@ func (s *Server) GetSensor(c *gin.Context) {
 	name := c.Param("name")
 	if sensor, ok := sensors[name]; ok {
 		c.IndentedJSON(http.StatusOK, sensor)
-	} else {
-		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "Sensor not found in store"})
+		return
 	}
+	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "Sensor not found in store"})
 }
 
-func (s *Server) nearestSensor(c *gin.Context) {
+func (s *Server) NearestSensor(c *gin.Context) {
 	latstring, lonstring := c.Param("lat"), c.Param("lon")
 
 	var err error
@@ -122,7 +122,7 @@ type Status struct {
 
 // Health check for server. Usually It would we
 // should include the server version if there was one.
-func (s *Server) statusCheck(c *gin.Context) {
+func (s *Server) StatusCheck(c *gin.Context) {
 	status := Status{
 		Ok:     s.healthy,
 		Uptime: time.Since(s.started).String(),
