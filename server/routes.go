@@ -3,6 +3,7 @@ package server
 import (
 	"math"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -26,18 +27,11 @@ type SensorTags struct {
 	Name      string `json:"name"`
 }
 
-type Status struct {
-	Ok     bool   `json:"ok"`
-	Uptime string `json:"uptime"`
-}
-
-// TODO
-func (s *Server) ListSensors(c *gin.Context) {
+func (s *Server) listSensors(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, sensors)
 }
 
-// TODO
-func (s *Server) InsertSensor(c *gin.Context) {
+func (s *Server) addSensor(c *gin.Context) {
 	var newSensor Sensor
 	if err := c.BindJSON(&newSensor); err != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "sensor data incorrectly formated"})
@@ -48,12 +42,6 @@ func (s *Server) InsertSensor(c *gin.Context) {
 	c.IndentedJSON(http.StatusCreated, newSensor)
 }
 
-// TODO
-func (s *Server) UpdateSensor(c *gin.Context) {
-	// TODO: implement
-}
-
-// TODO
 func (s *Server) GetSensor(c *gin.Context) {
 	name := c.Param("name")
 	if sensor, ok := sensors[name]; ok {
@@ -63,21 +51,25 @@ func (s *Server) GetSensor(c *gin.Context) {
 	}
 }
 
-// TODO
-func (s *Server) NearestLocation(c *gin.Context) {
-	var userCoordinates Coordinates
-	if err := c.BindJSON(&userCoordinates); err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "coordinate data incorrectly formated"})
-		return
+func (s *Server) nearestSensor(c *gin.Context) {
+	latstring, lonstring := c.Param("lat"), c.Param("lon")
+
+	var err error
+	var latitude float64
+	if latitude, err = strconv.ParseFloat(latstring, 64); err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "unable to parse latitude string to float64"})
 	}
 
-	latitude := userCoordinates.Latitude
+	var longitude float64
+	if longitude, err = strconv.ParseFloat(lonstring, 64); err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "unable to parse longitude string to float64"})
+	}
+
 	if latitude < -90 || latitude > 90 {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "latitude must be between -90 and 90"})
 		return
 	}
 
-	longitude := userCoordinates.Longitude
 	if longitude < -180 || longitude > 180 {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "longitude must be between -180 and 180"})
 		return
@@ -85,6 +77,7 @@ func (s *Server) NearestLocation(c *gin.Context) {
 
 	min := math.Inf(1)
 	var minSensor Sensor
+	userCoordinates := Coordinates{Latitude: latitude, Longitude: longitude}
 	for _, sensor := range sensors {
 		distance := Haversine(userCoordinates, sensor.Location)
 		min = math.Min(min, distance)
@@ -122,11 +115,14 @@ func Haversine(user, sensor Coordinates) float64 {
 	return float64(earthsRadius) * c
 }
 
-// Health check for server. Usually It would be
-// best practice to include other info here like time
-// since the server started and server version if
-// there was one.
-func (s *Server) Health(c *gin.Context) {
+type Status struct {
+	Ok     bool   `json:"ok"`
+	Uptime string `json:"uptime"`
+}
+
+// Health check for server. Usually It would we
+// should include the server version if there was one.
+func (s *Server) statusCheck(c *gin.Context) {
 	status := Status{
 		Ok:     s.healthy,
 		Uptime: time.Since(s.started).String(),

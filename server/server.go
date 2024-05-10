@@ -75,7 +75,6 @@ func New(addr string) (server *Server) {
 	return server
 }
 
-// TODO
 func (s *Server) Serve() (err error) {
 	s.healthy = true
 	s.started = time.Now()
@@ -88,12 +87,10 @@ func (s *Server) Serve() (err error) {
 	return nil
 }
 
-// TODO
 func (s *Server) setupRoutes() {
-	s.router.GET("/allsensors", s.ListSensors)
+	s.router.GET("/allsensors", s.listSensors)
+	s.router.POST("/sensor", s.addSensor)
 	s.router.GET("/sensor/:name", s.GetSensor)
-	s.router.POST("/sensor", s.InsertSensor)
-	s.router.PUT("/sensor", s.UpdateSensor)
-	s.router.GET("/nearest", s.NearestLocation)
-	s.router.GET("/health", s.Health)
+	s.router.GET("/nearest/:lat/:lon", s.nearestSensor)
+	s.router.GET("/health", s.statusCheck)
 }

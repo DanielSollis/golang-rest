@@ -95,8 +95,19 @@ func main() {
 			Action:   nearestSensor,
 			Flags: []cli.Flag{
 				&cli.StringFlag{
-					Name:  "",
-					Usage: "",
+					Name:    "endpoint",
+					Aliases: []string{"e"},
+					Value:   "http://localhost:8080/nearest",
+				},
+				&cli.Float64Flag{
+					Name:     "lat",
+					Aliases:  []string{"a"},
+					Required: true,
+				},
+				&cli.Float64Flag{
+					Name:     "lon",
+					Aliases:  []string{"o"},
+					Required: true,
 				},
 			},
 		},
@@ -166,8 +177,15 @@ func getSensor(c *cli.Context) (err error) {
 	return nil
 }
 
-// TODO
 func nearestSensor(c *cli.Context) (err error) {
+	var responseString string
+	lat, lon := c.Float64("lat"), c.Float64("lon")
+	url := fmt.Sprintf("%s/%f/%f", c.String("endpoint"), lat, lon)
+	if responseString, err = getEndpoint(url); err != nil {
+		fmt.Println(err)
+		return err
+	}
+	fmt.Println(responseString)
 	return nil
 }
 
