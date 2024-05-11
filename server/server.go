@@ -11,7 +11,7 @@ import (
 
 type Server struct {
 	srv     *http.Server // http server for API defaults
-	router  *gin.Engine  // the http handler
+	router  *gin.Engine  // http handler
 	db      *sql.DB      // SQLite connection
 	healthy bool         // server state for health checks
 	started time.Time    // when the server started
@@ -57,7 +57,7 @@ func (s *Server) Serve() (err error) {
 	s.started = time.Now()
 
 	log.Println("server starting")
-	if err = s.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+	if err = s.srv.ListenAndServe(); err != nil {
 		return err
 	}
 

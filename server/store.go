@@ -83,3 +83,17 @@ func (s *Server) insertSensor(name, unit string, lat, lon float64) (err error) {
 	}
 	return nil
 }
+
+func CreateSensor(name, unit string, lat, lon float64) *Sensor {
+	return &Sensor{
+		Name: name,
+		Location: Coordinates{
+			Latitude:  lat,
+			Longitude: lon,
+		},
+		Tags: SensorTags{
+			Name: name,
+			Unit: unit,
+		},
+	}
+}
