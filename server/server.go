@@ -1,6 +1,7 @@
 package server
 
 import (
+	"database/sql"
 	"log"
 	"net/http"
 	"time"
@@ -11,11 +12,28 @@ import (
 type Server struct {
 	srv     *http.Server // http server for API defaults
 	router  *gin.Engine  // the http handler
+	db      *sql.DB      // SQLite connection
 	healthy bool         // server state for health checks
 	started time.Time    // when the server started
 }
 
-var sensors = map[string]Sensor{
+type Sensor struct {
+	Name     string      `json:"name"`
+	Location Coordinates `json:"location"`
+	Tags     SensorTags  `json:"tags"`
+}
+
+type Coordinates struct {
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+}
+
+type SensorTags struct {
+	Unit string `json:"unit"`
+	Name string `json:"name"`
+}
+
+var sensors = map[string]*Sensor{
 	"L1MAG": {
 		Name: "L1MAG",
 		// Null Island off the coast of Africa
@@ -24,10 +42,8 @@ var sensors = map[string]Sensor{
 			Longitude: 0,
 		},
 		Tags: SensorTags{
-			Name:      "L1MAG",
-			Unit:      "volts",
-			Ingress:   "",
-			Distiller: "",
+			Name: "L1MAG",
+			Unit: "volts",
 		},
 	},
 	"L1ANG": {
@@ -38,10 +54,8 @@ var sensors = map[string]Sensor{
 			Longitude: 117.9,
 		},
 		Tags: SensorTags{
-			Name:      "L1ANG",
-			Unit:      "deg",
-			Ingress:   "",
-			Distiller: "",
+			Name: "L1ANG",
+			Unit: "deg",
 		},
 	},
 	"C1MAG": {
@@ -52,15 +66,13 @@ var sensors = map[string]Sensor{
 			Longitude: 175.7,
 		},
 		Tags: SensorTags{
-			Name:      "C1MAG",
-			Unit:      "amps",
-			Ingress:   "",
-			Distiller: "",
+			Name: "C1MAG",
+			Unit: "amps",
 		},
 	},
 }
 
-func New(addr string) (server *Server) {
+func New(addr string) (server *Server, err error) {
 	ginRouter := gin.Default()
 	server = &Server{
 		srv: &http.Server{
@@ -71,8 +83,12 @@ func New(addr string) (server *Server) {
 		healthy: false,
 	}
 
+	if server.db, err = initDB(); err != nil {
+		return nil, err
+	}
+
 	server.setupRoutes()
-	return server
+	return server, nil
 }
 
 func (s *Server) Serve() (err error) {

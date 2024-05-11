@@ -15,7 +15,7 @@ import (
 
 type testSuite struct {
 	suite.Suite
-	srv              Server
+	srv              *Server
 	responseRecorder *httptest.ResponseRecorder
 	testContext      *gin.Context
 }
@@ -23,7 +23,10 @@ type testSuite struct {
 func (suite *testSuite) SetupTest() {
 	gin.SetMode(gin.TestMode)
 	suite.setupRecorder()
-	suite.srv = *New("fakeaddress")
+
+	var err error
+	suite.srv, err = New("fakeaddress")
+	suite.Nil(err)
 }
 
 func (suite *testSuite) setupRecorder() {
@@ -52,7 +55,7 @@ func (suite *testSuite) TestAddSensor() {
 	suite.testContext.Request.Method = "POST"
 	suite.testContext.Request.Header.Set("Content-Type", "application/json")
 
-	sensor := &Sensor{
+	requestSensor := &Sensor{
 		Name: "foo",
 		Location: Coordinates{
 			Latitude:  0,
@@ -63,15 +66,22 @@ func (suite *testSuite) TestAddSensor() {
 			Unit: "bar",
 		},
 	}
-	bodyBytes, err := json.Marshal(sensor)
+	bodyBytes, err := json.Marshal(requestSensor)
 	if err != nil {
 		panic(err)
 	}
-	body := bytes.NewBuffer(bodyBytes)
-	suite.testContext.Request.Body = io.NopCloser(body)
+	requestBody := bytes.NewBuffer(bodyBytes)
+	suite.testContext.Request.Body = io.NopCloser(requestBody)
 
 	suite.srv.addSensor(suite.testContext)
 	suite.Equal(201, suite.responseRecorder.Code)
+
+	responseBody, err := io.ReadAll(suite.responseRecorder.Body)
+	suite.Nil(err)
+
+	var responseSensor *Sensor
+	suite.Nil(json.Unmarshal(responseBody, &responseSensor))
+	suite.Equal(responseSensor, requestSensor)
 }
 
 func (suite *testSuite) TestGetSensor() {
@@ -108,7 +118,7 @@ func (suite *testSuite) TestNearestSensor() {
 	body, err := io.ReadAll(suite.responseRecorder.Body)
 	suite.Nil(err)
 
-	var responseSensor Sensor
+	var responseSensor *Sensor
 	suite.Nil(json.Unmarshal(body, &responseSensor))
 	suite.Equal(responseSensor.Name, "L1ANG")
 
@@ -139,11 +149,11 @@ func (suite *testSuite) TestStatusCheck() {
 
 func (suite *testSuite) TestHaversine() {
 	// test one
-	userCoordinates := Coordinates{
+	userCoordinates := &Coordinates{
 		Latitude:  0,
 		Longitude: 0,
 	}
-	sensorCoordinates := Coordinates{
+	sensorCoordinates := &Coordinates{
 		Latitude:  0,
 		Longitude: 180,
 	}
@@ -152,11 +162,11 @@ func (suite *testSuite) TestHaversine() {
 	suite.EqualValues(expected, math.Round(distance))
 
 	// Test two
-	userCoordinates = Coordinates{
+	userCoordinates = &Coordinates{
 		Latitude:  51.5007,
 		Longitude: 0.1246,
 	}
-	sensorCoordinates = Coordinates{
+	sensorCoordinates = &Coordinates{
 		Latitude:  40.6892,
 		Longitude: 74.0445,
 	}

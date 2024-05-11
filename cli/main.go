@@ -132,9 +132,12 @@ var srv *server.Server
 
 func serve(c *cli.Context) (err error) {
 	addr := c.String("address")
-	srv = server.New(addr)
+	if srv, err = server.New(addr); err != nil {
+		return err
+	}
+
 	if err := srv.Serve(); err != nil {
-		fmt.Println(err)
+		return err
 	}
 	return nil
 }
@@ -153,7 +156,7 @@ func listSensors(c *cli.Context) (err error) {
 func addSensor(c *cli.Context) (err error) {
 	name, unit := c.String("name"), c.String("unit")
 	lat, lon := c.Float64("lat"), c.Float64("lon")
-	sensor := createSensor(name, unit, lat, lon)
+	sensor := server.CreateSensor(name, unit, lat, lon)
 
 	var responseString string
 	url := c.String("endpoint")
@@ -230,18 +233,4 @@ func postEndpoint(url string, toMarshal interface{}) (_ string, err error) {
 		return "", err
 	}
 	return string(responseBody), nil
-}
-
-func createSensor(name, unit string, lat, lon float64) *server.Sensor {
-	return &server.Sensor{
-		Name: name,
-		Location: server.Coordinates{
-			Latitude:  lat,
-			Longitude: lon,
-		},
-		Tags: server.SensorTags{
-			Name: name,
-			Unit: unit,
-		},
-	}
 }
