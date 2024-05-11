@@ -58,6 +58,12 @@ func (s *Server) nearestSensor(c *gin.Context) {
 		return
 	}
 
+	// Query all sensors
+	sensors, err := s.queryAllSensors()
+	if err != nil {
+		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "Error querying sensors"})
+	}
+
 	// Find the nearest sensor
 	min := math.Inf(1)
 	var minSensor *Sensor

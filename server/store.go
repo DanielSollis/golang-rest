@@ -15,9 +15,7 @@ func initDB() (conn *sql.DB, err error) {
 			name string PRIMARY KEY,
 			latitude REAL,
 			longitude REAL,
-			unit string,
-			Ingress string,
-			distiller string
+			unit string
 		)
 	`); err != nil {
 		return nil, err
@@ -54,7 +52,8 @@ func (s *Server) queryAllSensors() (sensors []*Sensor, err error) {
 	var name, unit string
 	for rows.Next() {
 		rows.Scan(&name, &lat, &lon, &unit)
-		sensors = append(sensors, CreateSensor(name, unit, lat, lon))
+		newSensor := CreateSensor(name, unit, lat, lon)
+		sensors = append(sensors, newSensor)
 	}
 	return sensors, nil
 }
