@@ -75,10 +75,9 @@ func (s *Server) queryAllSensors() (sensors []*Sensor, err error) {
 	return sensors, nil
 }
 
-const insertString = "INSERT INTO sensors(name, latitude, longitude, unit) VALUES(?, ?, ?, ?)"
-
 func (s *Server) insertSensor(name, unit string, lat, lon float64) (err error) {
-	if _, err = s.db.Exec(insertString, name, lat, lon, unit); err != nil {
+	insertStatement := "INSERT INTO sensors(name, latitude, longitude, unit) VALUES(?, ?, ?, ?)"
+	if _, err = s.db.Exec(insertStatement, name, lat, lon, unit); err != nil {
 		return err
 	}
 	return nil

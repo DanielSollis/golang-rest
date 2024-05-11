@@ -4,6 +4,9 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -56,12 +59,26 @@ func (s *Server) Serve() (err error) {
 	s.healthy = true
 	s.started = time.Now()
 
+	// Listen for ctrl+c sigint call
+	interupt := make(chan os.Signal, 1)
+	signal.Notify(interupt, syscall.SIGINT)
+	go func() {
+		<-interupt
+		log.Println("shutting down server")
+		s.shutdown()
+	}()
+
 	log.Println("server starting")
 	if err = s.srv.ListenAndServe(); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (s *Server) shutdown() {
+	s.db.Close()
+	s.srv.Close()
 }
 
 func (s *Server) setupRoutes() {
