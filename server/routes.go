@@ -12,7 +12,7 @@ import (
 func (s *Server) listSensors(c *gin.Context) {
 	sensors, err := s.queryAllSensors()
 	if err != nil {
-		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "Error querying sensors"})
+		c.IndentedJSON(http.StatusNotFound, gin.H{"error": err})
 	}
 	c.IndentedJSON(http.StatusOK, sensors)
 }
@@ -20,21 +20,29 @@ func (s *Server) listSensors(c *gin.Context) {
 func (s *Server) addSensor(c *gin.Context) {
 	var newSensor *Sensor
 	if err := c.BindJSON(&newSensor); err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "sensor data incorrectly formated"})
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err})
 		return
 	}
 
-	sensors[newSensor.Name] = newSensor
+	if err := s.insertSensor(
+		newSensor.Name,
+		newSensor.Tags.Unit,
+		newSensor.Location.Latitude,
+		newSensor.Location.Longitude,
+	); err != nil {
+		c.IndentedJSON(http.StatusNotFound, gin.H{"error": err})
+	}
 	c.IndentedJSON(http.StatusCreated, newSensor)
 }
 
 func (s *Server) getSensor(c *gin.Context) {
-	name := c.Param("name")
-	if sensor, ok := sensors[name]; ok {
-		c.IndentedJSON(http.StatusOK, sensor)
+	var err error
+	var sensor *Sensor
+	if sensor, err = s.querySensor(c.Param("name")); err != nil {
+		c.IndentedJSON(http.StatusNotFound, gin.H{"error": err})
 		return
 	}
-	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "Sensor not found in store"})
+	c.IndentedJSON(http.StatusOK, sensor)
 }
 
 func (s *Server) nearestSensor(c *gin.Context) {
@@ -42,26 +50,26 @@ func (s *Server) nearestSensor(c *gin.Context) {
 	var err error
 	var latitude, longitude float64
 	if latitude, err = strconv.ParseFloat(c.Param("lat"), 64); err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "unable to parse latitude string to float64"})
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err})
 	}
 	if longitude, err = strconv.ParseFloat(c.Param("lon"), 64); err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "unable to parse longitude string to float64"})
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err})
 	}
 
 	// Input validation
 	if latitude < -90 || latitude > 90 {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "latitude must be between -90 and 90"})
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "latitude must be between -90 and 90"})
 		return
 	}
 	if longitude < -180 || longitude > 180 {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "longitude must be between -180 and 180"})
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "longitude must be between -180 and 180"})
 		return
 	}
 
 	// Query all sensors
 	sensors, err := s.queryAllSensors()
 	if err != nil {
-		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "Error querying sensors"})
+		c.IndentedJSON(http.StatusNotFound, gin.H{"error": err})
 	}
 
 	// Find the nearest sensor

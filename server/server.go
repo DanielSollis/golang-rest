@@ -33,45 +33,6 @@ type SensorTags struct {
 	Name string `json:"name"`
 }
 
-var sensors = map[string]*Sensor{
-	"L1MAG": {
-		Name: "L1MAG",
-		// Null Island off the coast of Africa
-		Location: Coordinates{
-			Latitude:  0,
-			Longitude: 0,
-		},
-		Tags: SensorTags{
-			Name: "L1MAG",
-			Unit: "volts",
-		},
-	},
-	"L1ANG": {
-		Name: "L1ANG",
-		// Disneyland, Anaheim
-		Location: Coordinates{
-			Latitude:  33.8,
-			Longitude: 117.9,
-		},
-		Tags: SensorTags{
-			Name: "L1ANG",
-			Unit: "deg",
-		},
-	},
-	"C1MAG": {
-		Name: "C1MAG",
-		// Hobbiton, New Zealand
-		Location: Coordinates{
-			Latitude:  37.8,
-			Longitude: 175.7,
-		},
-		Tags: SensorTags{
-			Name: "C1MAG",
-			Unit: "amps",
-		},
-	},
-}
-
 func New(addr string) (server *Server, err error) {
 	ginRouter := gin.Default()
 	server = &Server{

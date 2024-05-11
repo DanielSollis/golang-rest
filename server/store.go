@@ -2,6 +2,7 @@ package server
 
 import (
 	"database/sql"
+	"errors"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -38,8 +39,24 @@ func storeInitialSensors(conn *sql.DB) (err error) {
 	return err
 }
 
-func (s *Server) querySensor(name string) (_ []Sensor, err error) {
-	return nil, nil
+func (s *Server) querySensor(name string) (sensor *Sensor, err error) {
+	var rows *sql.Rows
+	if rows, err = s.db.Query("SELECT * FROM sensors WHERE name=(?)", name); err != nil {
+		return nil, err
+	}
+
+	var unit string
+	var lat, lon float64
+	for rows.Next() {
+		rows.Scan(&name, &lat, &lon, &unit)
+		sensor = CreateSensor(name, unit, lat, lon)
+	}
+
+	if sensor == nil {
+		return nil, errors.New("Sensor not found in store")
+	}
+
+	return sensor, nil
 }
 
 func (s *Server) queryAllSensors() (sensors []*Sensor, err error) {
@@ -58,8 +75,11 @@ func (s *Server) queryAllSensors() (sensors []*Sensor, err error) {
 	return sensors, nil
 }
 
-const insertString = "INSERT INTO sensors(name, latitude, longitude, unit, Ingress, distiller) VALUES(?, ?, ?, ?, ?, ?)"
+const insertString = "INSERT INTO sensors(name, latitude, longitude, unit) VALUES(?, ?, ?, ?)"
 
 func (s *Server) insertSensor(name, unit string, lat, lon float64) (err error) {
+	if _, err = s.db.Exec(insertString, name, lat, lon, unit); err != nil {
+		return err
+	}
 	return nil
 }
