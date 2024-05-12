@@ -12,7 +12,7 @@ import (
 func (s *Server) listSensors(c *gin.Context) {
 	sensors, err := s.queryAllSensors()
 	if err != nil {
-		c.IndentedJSON(http.StatusNotFound, gin.H{"error": err})
+		c.IndentedJSON(http.StatusNotFound, gin.H{"error": err.Error()})
 	}
 	c.IndentedJSON(http.StatusOK, sensors)
 }
@@ -20,7 +20,7 @@ func (s *Server) listSensors(c *gin.Context) {
 func (s *Server) addSensor(c *gin.Context) {
 	var newSensor *Sensor
 	if err := c.BindJSON(&newSensor); err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err})
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -30,30 +30,47 @@ func (s *Server) addSensor(c *gin.Context) {
 		newSensor.Location.Latitude,
 		newSensor.Location.Longitude,
 	); err != nil {
-		c.IndentedJSON(http.StatusNotFound, gin.H{"error": err})
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
 	c.IndentedJSON(http.StatusCreated, newSensor)
+}
+
+func (s *Server) updateSensor(c *gin.Context) {
+	var toUpdate *Sensor
+	if err := c.BindJSON(&toUpdate); err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if err := s.updateSensorStore(
+		toUpdate.Name,
+		toUpdate.Tags.Unit,
+		toUpdate.Location.Latitude,
+		toUpdate.Location.Longitude,
+	); err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	}
+	c.IndentedJSON(http.StatusOK, toUpdate)
 }
 
 func (s *Server) getSensor(c *gin.Context) {
 	var err error
 	var sensor *Sensor
 	if sensor, err = s.querySensor(c.Param("name")); err != nil {
-		c.IndentedJSON(http.StatusNotFound, gin.H{"error": err})
+		c.IndentedJSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
 	c.IndentedJSON(http.StatusOK, sensor)
 }
 
-func (s *Server) nearestSensor(c *gin.Context) {
+func (s *Server) getNearestSensor(c *gin.Context) {
 	// Parse the query parameters to float64
 	var err error
 	var latitude, longitude float64
 	if latitude, err = strconv.ParseFloat(c.Param("lat"), 64); err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err})
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
 	if longitude, err = strconv.ParseFloat(c.Param("lon"), 64); err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err})
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
 
 	// Input validation
@@ -69,7 +86,7 @@ func (s *Server) nearestSensor(c *gin.Context) {
 	// Query all sensors
 	sensors, err := s.queryAllSensors()
 	if err != nil {
-		c.IndentedJSON(http.StatusNotFound, gin.H{"error": err})
+		c.IndentedJSON(http.StatusNotFound, gin.H{"error": err.Error()})
 	}
 
 	// Find the nearest sensor
@@ -111,7 +128,9 @@ func haversine(user, sensor *Coordinates) float64 {
 	// Calculate the angular between the two points 'c'
 	c := 2 * math.Asin(math.Sqrt(a))
 
-	earthsRadius := 6371 // In km (approximately)
+	// In km (...approximately)
+	earthsRadius := 6371
+
 	return float64(earthsRadius) * c
 }
 
@@ -121,7 +140,7 @@ type Status struct {
 }
 
 // Health check for server. Usually It would we
-// should include the server version if there was one.
+// should include the server version if there was one
 func (s *Server) statusCheck(c *gin.Context) {
 	status := Status{
 		Ok:     s.healthy,

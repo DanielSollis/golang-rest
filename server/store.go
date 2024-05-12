@@ -76,8 +76,16 @@ func (s *Server) queryAllSensors() (sensors []*Sensor, err error) {
 }
 
 func (s *Server) insertSensor(name, unit string, lat, lon float64) (err error) {
-	insertStatement := "INSERT INTO sensors(name, latitude, longitude, unit) VALUES(?, ?, ?, ?)"
+	insertStatement := "INSERT INTO sensors (name, latitude, longitude, unit) VALUES(?, ?, ?, ?)"
 	if _, err = s.db.Exec(insertStatement, name, lat, lon, unit); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Server) updateSensorStore(name, unit string, lat, lon float64) (err error) {
+	updateStatement := "UPDATE sensors SET name=?, latitude=?, longitude=?, unit=? WHERE name = ?"
+	if _, err = s.db.Exec(updateStatement, name, lat, lon, unit, name); err != nil {
 		return err
 	}
 	return nil

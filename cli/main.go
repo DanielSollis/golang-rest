@@ -39,7 +39,6 @@ func main() {
 				},
 			},
 		},
-
 		{
 			Name:     "add",
 			Category: "client",
@@ -57,12 +56,44 @@ func main() {
 				},
 				&cli.Float64Flag{
 					Name:     "lat",
-					Aliases:  []string{"a"},
+					Aliases:  []string{"la"},
 					Required: true,
 				},
 				&cli.Float64Flag{
 					Name:     "lon",
-					Aliases:  []string{"o"},
+					Aliases:  []string{"lo"},
+					Required: true,
+				},
+				&cli.StringFlag{
+					Name:     "unit",
+					Aliases:  []string{"u"},
+					Required: true,
+				},
+			},
+		},
+		{
+			Name:     "update",
+			Category: "client",
+			Action:   updateSensor,
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:    "endpoint",
+					Aliases: []string{"e"},
+					Value:   "http://localhost:8080/sensor",
+				},
+				&cli.StringFlag{
+					Name:     "name",
+					Aliases:  []string{"n"},
+					Required: true,
+				},
+				&cli.Float64Flag{
+					Name:     "lat",
+					Aliases:  []string{"la"},
+					Required: true,
+				},
+				&cli.Float64Flag{
+					Name:     "lon",
+					Aliases:  []string{"lo"},
 					Required: true,
 				},
 				&cli.StringFlag{
@@ -101,12 +132,12 @@ func main() {
 				},
 				&cli.Float64Flag{
 					Name:     "lat",
-					Aliases:  []string{"a"},
+					Aliases:  []string{"la"},
 					Required: true,
 				},
 				&cli.Float64Flag{
 					Name:     "lon",
-					Aliases:  []string{"o"},
+					Aliases:  []string{"lo"},
 					Required: true,
 				},
 			},
@@ -159,6 +190,21 @@ func addSensor(c *cli.Context) (err error) {
 
 	var responseString string
 	url := c.String("endpoint")
+	if responseString, err = postEndpoint(url, sensor); err != nil {
+		fmt.Println(err)
+		return err
+	}
+	fmt.Println(responseString)
+	return nil
+}
+
+func updateSensor(c *cli.Context) (err error) {
+	name, unit := c.String("name"), c.String("unit")
+	lat, lon := c.Float64("lat"), c.Float64("lon")
+	sensor := server.CreateSensor(name, unit, lat, lon)
+
+	var responseString string
+	url := fmt.Sprintf("%s/%s", c.String("endpoint"), name)
 	if responseString, err = postEndpoint(url, sensor); err != nil {
 		fmt.Println(err)
 		return err

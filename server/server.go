@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"database/sql"
 	"log"
 	"net/http"
@@ -52,6 +53,7 @@ func New(addr string) (server *Server, err error) {
 	}
 
 	server.setupRoutes()
+
 	return server, nil
 }
 
@@ -59,7 +61,7 @@ func (s *Server) Serve() (err error) {
 	s.healthy = true
 	s.started = time.Now()
 
-	// Listen for ctrl+c sigint call
+	// Listen for sigint call to close server
 	interupt := make(chan os.Signal, 1)
 	signal.Notify(interupt, syscall.SIGINT)
 	go func() {
@@ -78,13 +80,15 @@ func (s *Server) Serve() (err error) {
 
 func (s *Server) shutdown() {
 	s.db.Close()
-	s.srv.Close()
+	ctx := context.Background()
+	_ = s.srv.Shutdown(ctx)
 }
 
 func (s *Server) setupRoutes() {
 	s.router.GET("/allsensors", s.listSensors)
 	s.router.POST("/sensor", s.addSensor)
+	s.router.POST("/sensor/:name", s.updateSensor)
 	s.router.GET("/sensor/:name", s.getSensor)
-	s.router.GET("/nearest/:lat/:lon", s.nearestSensor)
+	s.router.GET("/nearest/:lat/:lon", s.getNearestSensor)
 	s.router.GET("/health", s.statusCheck)
 }

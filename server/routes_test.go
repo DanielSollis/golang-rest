@@ -84,6 +84,10 @@ func (suite *testSuite) TestAddSensor() {
 	suite.Equal(responseSensor, requestSensor)
 }
 
+func (suite *testSuite) TestUpdateSensor() {
+	suite.Equal(1, "IMPLEMENT!")
+}
+
 func (suite *testSuite) TestGetSensor() {
 	suite.testContext.Params = []gin.Param{{
 		Key:   "name",
@@ -112,7 +116,7 @@ func (suite *testSuite) TestNearestSensor() {
 			Value: "100",
 		},
 	}
-	suite.srv.nearestSensor(suite.testContext)
+	suite.srv.getNearestSensor(suite.testContext)
 	suite.Equal(200, suite.responseRecorder.Code)
 
 	body, err := io.ReadAll(suite.responseRecorder.Body)
@@ -132,7 +136,7 @@ func (suite *testSuite) TestNearestSensor() {
 			Value: "170",
 		},
 	}
-	suite.srv.nearestSensor(suite.testContext)
+	suite.srv.getNearestSensor(suite.testContext)
 	suite.Equal(200, suite.responseRecorder.Code)
 
 	body, err = io.ReadAll(suite.responseRecorder.Body)
