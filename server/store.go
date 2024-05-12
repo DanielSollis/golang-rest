@@ -7,7 +7,12 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func initDB() (conn *sql.DB, err error) {
+type store struct {
+	conn *sql.DB
+}
+
+func initDB() (db *store, err error) {
+	var conn *sql.DB
 	if conn, err = sql.Open("sqlite3", ":memory:"); err != nil {
 		return nil, err
 	}
@@ -26,7 +31,7 @@ func initDB() (conn *sql.DB, err error) {
 		return nil, err
 	}
 
-	return conn, nil
+	return &store{conn: conn}, nil
 }
 
 func storeInitialSensors(conn *sql.DB) (err error) {
@@ -39,9 +44,9 @@ func storeInitialSensors(conn *sql.DB) (err error) {
 	return err
 }
 
-func (s *Server) querySensor(name string) (sensor *Sensor, err error) {
+func (db *store) querySensor(name string) (sensor *Sensor, err error) {
 	var rows *sql.Rows
-	if rows, err = s.db.Query("SELECT * FROM sensors WHERE name=(?)", name); err != nil {
+	if rows, err = db.conn.Query("SELECT * FROM sensors WHERE name=(?)", name); err != nil {
 		return nil, err
 	}
 
@@ -59,9 +64,9 @@ func (s *Server) querySensor(name string) (sensor *Sensor, err error) {
 	return sensor, nil
 }
 
-func (s *Server) queryAllSensors() (sensors []*Sensor, err error) {
+func (db *store) queryAllSensors() (sensors []*Sensor, err error) {
 	var rows *sql.Rows
-	if rows, err = s.db.Query("SELECT * FROM sensors"); err != nil {
+	if rows, err = db.conn.Query("SELECT * FROM sensors"); err != nil {
 		return nil, err
 	}
 
@@ -75,17 +80,17 @@ func (s *Server) queryAllSensors() (sensors []*Sensor, err error) {
 	return sensors, nil
 }
 
-func (s *Server) insertSensor(name, unit string, lat, lon float64) (err error) {
+func (db *store) insertSensor(name, unit string, lat, lon float64) (err error) {
 	insertStatement := "INSERT INTO sensors (name, latitude, longitude, unit) VALUES(?, ?, ?, ?)"
-	if _, err = s.db.Exec(insertStatement, name, lat, lon, unit); err != nil {
+	if _, err = db.conn.Exec(insertStatement, name, lat, lon, unit); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *Server) updateSensorStore(name, unit string, lat, lon float64) (err error) {
+func (db *store) updateSensor(name, unit string, lat, lon float64) (err error) {
 	updateStatement := "UPDATE sensors SET name=?, latitude=?, longitude=?, unit=? WHERE name = ?"
-	if _, err = s.db.Exec(updateStatement, name, lat, lon, unit, name); err != nil {
+	if _, err = db.conn.Exec(updateStatement, name, lat, lon, unit, name); err != nil {
 		return err
 	}
 	return nil

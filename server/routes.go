@@ -10,7 +10,7 @@ import (
 )
 
 func (s *Server) listSensors(c *gin.Context) {
-	sensors, err := s.queryAllSensors()
+	sensors, err := s.db.queryAllSensors()
 	if err != nil {
 		c.IndentedJSON(http.StatusNotFound, gin.H{"error": err.Error()})
 	}
@@ -24,7 +24,7 @@ func (s *Server) addSensor(c *gin.Context) {
 		return
 	}
 
-	if err := s.insertSensor(
+	if err := s.db.insertSensor(
 		newSensor.Name,
 		newSensor.Tags.Unit,
 		newSensor.Location.Latitude,
@@ -41,7 +41,7 @@ func (s *Server) updateSensor(c *gin.Context) {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	if err := s.updateSensorStore(
+	if err := s.db.updateSensor(
 		toUpdate.Name,
 		toUpdate.Tags.Unit,
 		toUpdate.Location.Latitude,
@@ -55,7 +55,7 @@ func (s *Server) updateSensor(c *gin.Context) {
 func (s *Server) getSensor(c *gin.Context) {
 	var err error
 	var sensor *Sensor
-	if sensor, err = s.querySensor(c.Param("name")); err != nil {
+	if sensor, err = s.db.querySensor(c.Param("name")); err != nil {
 		c.IndentedJSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
@@ -84,7 +84,7 @@ func (s *Server) getNearestSensor(c *gin.Context) {
 	}
 
 	// Query all sensors
-	sensors, err := s.queryAllSensors()
+	sensors, err := s.db.queryAllSensors()
 	if err != nil {
 		c.IndentedJSON(http.StatusNotFound, gin.H{"error": err.Error()})
 	}

@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"database/sql"
 	"log"
 	"net/http"
 	"os"
@@ -16,7 +15,7 @@ import (
 type Server struct {
 	srv     *http.Server // http server for API defaults
 	router  *gin.Engine  // http handler
-	db      *sql.DB      // SQLite connection
+	db      *store       // SQLite connection
 	healthy bool         // server state for health checks
 	started time.Time    // when the server started
 }
@@ -79,7 +78,7 @@ func (s *Server) Serve() (err error) {
 }
 
 func (s *Server) shutdown() {
-	s.db.Close()
+	s.db.conn.Close()
 	ctx := context.Background()
 	_ = s.srv.Shutdown(ctx)
 }

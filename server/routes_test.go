@@ -55,24 +55,12 @@ func (suite *testSuite) TestAddSensor() {
 	suite.testContext.Request.Method = "POST"
 	suite.testContext.Request.Header.Set("Content-Type", "application/json")
 
-	requestSensor := &Sensor{
-		Name: "foo",
-		Location: Coordinates{
-			Latitude:  0,
-			Longitude: 0,
-		},
-		Tags: SensorTags{
-			Name: "foo",
-			Unit: "bar",
-		},
-	}
+	requestSensor := CreateSensor("foo", "bar", 0, 0)
 	bodyBytes, err := json.Marshal(requestSensor)
-	if err != nil {
-		panic(err)
-	}
+	suite.Nil(err)
+
 	requestBody := bytes.NewBuffer(bodyBytes)
 	suite.testContext.Request.Body = io.NopCloser(requestBody)
-
 	suite.srv.addSensor(suite.testContext)
 	suite.Equal(201, suite.responseRecorder.Code)
 
@@ -85,7 +73,27 @@ func (suite *testSuite) TestAddSensor() {
 }
 
 func (suite *testSuite) TestUpdateSensor() {
-	suite.Equal(1, "IMPLEMENT!")
+	suite.testContext.Request = &http.Request{
+		Header: make(http.Header),
+	}
+	suite.testContext.Request.Method = "POST"
+	suite.testContext.Request.Header.Set("Content-Type", "application/json")
+
+	requestSensor := CreateSensor("C1MAG", "amps", 10, 20)
+	bodyBytes, err := json.Marshal(requestSensor)
+	suite.Nil(err)
+
+	requestBody := bytes.NewBuffer(bodyBytes)
+	suite.testContext.Request.Body = io.NopCloser(requestBody)
+	suite.srv.updateSensor(suite.testContext)
+	suite.Equal(200, suite.responseRecorder.Code)
+
+	responseBody, err := io.ReadAll(suite.responseRecorder.Body)
+	suite.Nil(err)
+
+	var responseSensor *Sensor
+	suite.Nil(json.Unmarshal(responseBody, &responseSensor))
+	suite.Equal(responseSensor, requestSensor)
 }
 
 func (suite *testSuite) TestGetSensor() {
