@@ -13,11 +13,11 @@ import (
 )
 
 type Server struct {
-	srv     *http.Server // http server for API defaults
-	router  *gin.Engine  // http handler
-	db      *store       // SQLite connection
-	healthy bool         // server state for health checks
-	started time.Time    // when the server started
+	srv     *http.Server // http server for API defaults.
+	gin     *gin.Engine  // http handler.
+	db      *store       // SQLite connection.
+	healthy bool         // server state for health checks.
+	started time.Time    // when the server started.
 }
 
 type Sensor struct {
@@ -37,13 +37,13 @@ type SensorTags struct {
 }
 
 func New(addr string) (server *Server, err error) {
-	ginRouter := gin.Default()
+	ginEngine := gin.Default()
 	server = &Server{
 		srv: &http.Server{
 			Addr:    addr,
-			Handler: ginRouter,
+			Handler: ginEngine,
 		},
-		router:  ginRouter,
+		gin:     ginEngine,
 		healthy: false,
 	}
 
@@ -60,7 +60,8 @@ func (s *Server) Serve() (err error) {
 	s.healthy = true
 	s.started = time.Now()
 
-	// Listen for sigint call to close server.
+	// Listen for sigint call to gracefully
+	// shutdown the server.
 	interupt := make(chan os.Signal, 1)
 	signal.Notify(interupt, syscall.SIGINT)
 	go func() {
@@ -85,12 +86,12 @@ func (s *Server) shutdown() {
 	_ = s.srv.Shutdown(ctx)
 }
 
-// Add REST endpoints to Gin server.
+// Add REST endpoints to the Gin engine.
 func (s *Server) setupRoutes() {
-	s.router.GET("/allsensors", s.listSensors)
-	s.router.POST("/sensor", s.addSensor)
-	s.router.PUT("/sensor/:name", s.updateSensor)
-	s.router.GET("/sensor/:name", s.getSensor)
-	s.router.GET("/nearest/:lat/:lon", s.getNearestSensor)
-	s.router.GET("/health", s.statusCheck)
+	s.gin.GET("/allsensors", s.listSensors)
+	s.gin.GET("/sensor/:name", s.getSensor)
+	s.gin.POST("/sensor", s.addSensor)
+	s.gin.PUT("/sensor/:name", s.updateSensor)
+	s.gin.GET("/nearest/:lat/:lon", s.getNearestSensor)
+	s.gin.GET("/health", s.statusCheck)
 }

@@ -175,7 +175,7 @@ func serve(c *cli.Context) (err error) {
 func listSensors(c *cli.Context) (err error) {
 	url := c.String("endpoint")
 	var responseString string
-	if responseString, err = getEndpoint(url); err != nil {
+	if responseString, err = getRequest(url); err != nil {
 		fmt.Println(err)
 		return err
 	}
@@ -190,7 +190,7 @@ func addSensor(c *cli.Context) (err error) {
 
 	var responseString string
 	url := c.String("endpoint")
-	if responseString, err = postEndpoint(url, sensor); err != nil {
+	if responseString, err = postRequest(url, sensor); err != nil {
 		fmt.Println(err)
 		return err
 	}
@@ -205,7 +205,7 @@ func updateSensor(c *cli.Context) (err error) {
 
 	var responseString string
 	url := fmt.Sprintf("%s/%s", c.String("endpoint"), name)
-	if responseString, err = putEndpoint(url, sensor); err != nil {
+	if responseString, err = putRequest(url, sensor); err != nil {
 		fmt.Println(err)
 		return err
 	}
@@ -217,7 +217,7 @@ func getSensor(c *cli.Context) (err error) {
 	var responseString string
 	endpoint, name := c.String("endpoint"), c.String("name")
 	url := fmt.Sprintf("%s/%s", endpoint, name)
-	if responseString, err = getEndpoint(url); err != nil {
+	if responseString, err = getRequest(url); err != nil {
 		fmt.Println(err)
 		return err
 	}
@@ -229,7 +229,7 @@ func nearestSensor(c *cli.Context) (err error) {
 	var responseString string
 	lat, lon := c.Float64("lat"), c.Float64("lon")
 	url := fmt.Sprintf("%s/%f/%f", c.String("endpoint"), lat, lon)
-	if responseString, err = getEndpoint(url); err != nil {
+	if responseString, err = getRequest(url); err != nil {
 		fmt.Println(err)
 		return err
 	}
@@ -240,7 +240,7 @@ func nearestSensor(c *cli.Context) (err error) {
 func statusCheck(c *cli.Context) (err error) {
 	endpoint := c.String("endpoint")
 	var responseString string
-	if responseString, err = getEndpoint(endpoint); err != nil {
+	if responseString, err = getRequest(endpoint); err != nil {
 		fmt.Println(err)
 		return err
 	}
@@ -248,7 +248,7 @@ func statusCheck(c *cli.Context) (err error) {
 	return nil
 }
 
-func getEndpoint(url string) (_ string, err error) {
+func getRequest(url string) (_ string, err error) {
 	var response *http.Response
 	if response, err = http.Get(url); err != nil {
 		return "", err
@@ -261,7 +261,7 @@ func getEndpoint(url string) (_ string, err error) {
 	return string(body), nil
 }
 
-func postEndpoint(url string, toMarshal interface{}) (_ string, err error) {
+func postRequest(url string, toMarshal interface{}) (_ string, err error) {
 	var jsonBytes []byte
 	if jsonBytes, err = json.Marshal(toMarshal); err != nil {
 		return "", err
@@ -280,7 +280,7 @@ func postEndpoint(url string, toMarshal interface{}) (_ string, err error) {
 	return string(responseBody), nil
 }
 
-func putEndpoint(url string, toMarshal interface{}) (_ string, err error) {
+func putRequest(url string, toMarshal interface{}) (_ string, err error) {
 	var jsonBytes []byte
 	if jsonBytes, err = json.Marshal(toMarshal); err != nil {
 		return "", err
@@ -288,12 +288,14 @@ func putEndpoint(url string, toMarshal interface{}) (_ string, err error) {
 
 	var request *http.Request
 	byteBuffer := bytes.NewBuffer(jsonBytes)
+	fmt.Println("foo")
 	if request, err = http.NewRequest("PUT", url, byteBuffer); err != nil {
 		return "", err
 	}
 
 	client := &http.Client{}
 	var response *http.Response
+	fmt.Println("foo")
 	request.Header.Set("Content-Type", "application/json")
 	if response, err = client.Do(request); err != nil {
 		return "", err
