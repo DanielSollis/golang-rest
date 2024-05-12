@@ -189,6 +189,7 @@ func serve(c *cli.Context) (err error) {
 	if err := srv.Serve(); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -200,6 +201,7 @@ func listSensors(c *cli.Context) (err error) {
 		return err
 	}
 	fmt.Println(responseString)
+
 	return nil
 }
 
@@ -219,6 +221,7 @@ func addSensor(c *cli.Context) (err error) {
 		return err
 	}
 	fmt.Println(responseString)
+
 	return nil
 }
 
@@ -232,47 +235,57 @@ func updateSensor(c *cli.Context) (err error) {
 	sensor := server.CreateSensor(name, unit, ingress, distiller, lat, lon)
 
 	var responseString string
-	url := fmt.Sprintf("%s/%s", c.String("endpoint"), name)
+	endpoint := c.String("endpoint")
+	url := fmt.Sprintf("%s/%s", endpoint, name)
 	if responseString, err = putRequest(url, sensor); err != nil {
 		fmt.Println(err)
 		return err
 	}
 	fmt.Println(responseString)
+
 	return nil
 }
 
 func getSensor(c *cli.Context) (err error) {
 	var responseString string
-	endpoint, name := c.String("endpoint"), c.String("name")
+	name := c.String("name")
+	endpoint := c.String("endpoint")
 	url := fmt.Sprintf("%s/%s", endpoint, name)
+
 	if responseString, err = getRequest(url); err != nil {
 		fmt.Println(err)
 		return err
 	}
 	fmt.Println(responseString)
+
 	return nil
 }
 
 func nearestSensor(c *cli.Context) (err error) {
 	var responseString string
-	lat, lon := c.Float64("lat"), c.Float64("lon")
-	url := fmt.Sprintf("%s/%f/%f", c.String("endpoint"), lat, lon)
+	lat := c.Float64("lat")
+	lon := c.Float64("lon")
+	endpoint := c.String("endpoint")
+	url := fmt.Sprintf("%s/%f/%f", endpoint, lat, lon)
+
 	if responseString, err = getRequest(url); err != nil {
 		fmt.Println(err)
 		return err
 	}
 	fmt.Println(responseString)
+
 	return nil
 }
 
 func statusCheck(c *cli.Context) (err error) {
-	endpoint := c.String("endpoint")
+	url := c.String("endpoint")
 	var responseString string
-	if responseString, err = getRequest(endpoint); err != nil {
+	if responseString, err = getRequest(url); err != nil {
 		fmt.Println(err)
 		return err
 	}
 	fmt.Println(responseString)
+
 	return nil
 }
 
@@ -286,6 +299,7 @@ func getRequest(url string) (_ string, err error) {
 	if body, err = io.ReadAll(response.Body); err != nil {
 		return "", err
 	}
+
 	return string(body), nil
 }
 
@@ -305,6 +319,7 @@ func postRequest(url string, toMarshal interface{}) (_ string, err error) {
 	if responseBody, err = io.ReadAll(response.Body); err != nil {
 		return "", err
 	}
+
 	return string(responseBody), nil
 }
 
@@ -316,14 +331,12 @@ func putRequest(url string, toMarshal interface{}) (_ string, err error) {
 
 	var request *http.Request
 	byteBuffer := bytes.NewBuffer(jsonBytes)
-	fmt.Println("foo")
 	if request, err = http.NewRequest("PUT", url, byteBuffer); err != nil {
 		return "", err
 	}
 
 	client := &http.Client{}
 	var response *http.Response
-	fmt.Println("foo")
 	request.Header.Set("Content-Type", "application/json")
 	if response, err = client.Do(request); err != nil {
 		return "", err
@@ -333,5 +346,6 @@ func putRequest(url string, toMarshal interface{}) (_ string, err error) {
 	if responseBody, err = io.ReadAll(response.Body); err != nil {
 		return "", err
 	}
+
 	return string(responseBody), nil
 }

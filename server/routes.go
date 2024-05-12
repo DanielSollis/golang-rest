@@ -48,6 +48,7 @@ func (s *Server) updateSensor(c *gin.Context) {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
 	if err := s.db.updateSensor(
 		updatedSensor.Name,
 		updatedSensor.Tags.Unit,
