@@ -205,7 +205,7 @@ func updateSensor(c *cli.Context) (err error) {
 
 	var responseString string
 	url := fmt.Sprintf("%s/%s", c.String("endpoint"), name)
-	if responseString, err = postEndpoint(url, sensor); err != nil {
+	if responseString, err = putEndpoint(url, sensor); err != nil {
 		fmt.Println(err)
 		return err
 	}
@@ -270,6 +270,32 @@ func postEndpoint(url string, toMarshal interface{}) (_ string, err error) {
 	var response *http.Response
 	requestBody := bytes.NewBuffer(jsonBytes)
 	if response, err = http.Post(url, "application/json", requestBody); err != nil {
+		return "", err
+	}
+
+	var responseBody []byte
+	if responseBody, err = io.ReadAll(response.Body); err != nil {
+		return "", err
+	}
+	return string(responseBody), nil
+}
+
+func putEndpoint(url string, toMarshal interface{}) (_ string, err error) {
+	var jsonBytes []byte
+	if jsonBytes, err = json.Marshal(toMarshal); err != nil {
+		return "", err
+	}
+
+	var request *http.Request
+	byteBuffer := bytes.NewBuffer(jsonBytes)
+	if request, err = http.NewRequest("PUT", url, byteBuffer); err != nil {
+		return "", err
+	}
+
+	client := &http.Client{}
+	var response *http.Response
+	request.Header.Set("Content-Type", "application/json")
+	if response, err = client.Do(request); err != nil {
 		return "", err
 	}
 

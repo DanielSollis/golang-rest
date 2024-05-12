@@ -47,7 +47,7 @@ func New(addr string) (server *Server, err error) {
 		healthy: false,
 	}
 
-	if server.db, err = initDB(); err != nil {
+	if server.db, err = newStore(); err != nil {
 		return nil, err
 	}
 
@@ -60,7 +60,7 @@ func (s *Server) Serve() (err error) {
 	s.healthy = true
 	s.started = time.Now()
 
-	// Listen for sigint call to close server
+	// Listen for sigint call to close server.
 	interupt := make(chan os.Signal, 1)
 	signal.Notify(interupt, syscall.SIGINT)
 	go func() {
@@ -77,16 +77,19 @@ func (s *Server) Serve() (err error) {
 	return nil
 }
 
+// Gracefully shutdown the server. Closes
+// the database connection and http server.
 func (s *Server) shutdown() {
 	s.db.conn.Close()
 	ctx := context.Background()
 	_ = s.srv.Shutdown(ctx)
 }
 
+// Add REST endpoints to Gin server.
 func (s *Server) setupRoutes() {
 	s.router.GET("/allsensors", s.listSensors)
 	s.router.POST("/sensor", s.addSensor)
-	s.router.POST("/sensor/:name", s.updateSensor)
+	s.router.PUT("/sensor/:name", s.updateSensor)
 	s.router.GET("/sensor/:name", s.getSensor)
 	s.router.GET("/nearest/:lat/:lon", s.getNearestSensor)
 	s.router.GET("/health", s.statusCheck)

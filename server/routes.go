@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// Query all sensors in the database.
 func (s *Server) listSensors(c *gin.Context) {
 	sensors, err := s.db.queryAllSensors()
 	if err != nil {
@@ -17,6 +18,7 @@ func (s *Server) listSensors(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, sensors)
 }
 
+// Add a new sensor to the database.
 func (s *Server) addSensor(c *gin.Context) {
 	var newSensor *Sensor
 	if err := c.BindJSON(&newSensor); err != nil {
@@ -35,6 +37,7 @@ func (s *Server) addSensor(c *gin.Context) {
 	c.IndentedJSON(http.StatusCreated, newSensor)
 }
 
+// Update a sensor already in the database.
 func (s *Server) updateSensor(c *gin.Context) {
 	var toUpdate *Sensor
 	if err := c.BindJSON(&toUpdate); err != nil {
@@ -52,6 +55,7 @@ func (s *Server) updateSensor(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, toUpdate)
 }
 
+// Query a specific sensor by name.
 func (s *Server) getSensor(c *gin.Context) {
 	var err error
 	var sensor *Sensor
@@ -62,8 +66,11 @@ func (s *Server) getSensor(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, sensor)
 }
 
+// Retrieve the nearest sensor in the database to the
+// query parameter coordinates. Queries all sensors
+// and iterates over them.
 func (s *Server) getNearestSensor(c *gin.Context) {
-	// Parse the query parameters to float64
+	// Parse the query parameters to float64.
 	var err error
 	var latitude, longitude float64
 	if latitude, err = strconv.ParseFloat(c.Param("lat"), 64); err != nil {
@@ -73,7 +80,7 @@ func (s *Server) getNearestSensor(c *gin.Context) {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
 
-	// Input validation
+	// Input validation.
 	if latitude < -90 || latitude > 90 {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "latitude must be between -90 and 90"})
 		return
@@ -83,13 +90,13 @@ func (s *Server) getNearestSensor(c *gin.Context) {
 		return
 	}
 
-	// Query all sensors
+	// Query all sensors.
 	sensors, err := s.db.queryAllSensors()
 	if err != nil {
 		c.IndentedJSON(http.StatusNotFound, gin.H{"error": err.Error()})
 	}
 
-	// Find the nearest sensor
+	// Find the nearest sensor.
 	min := math.Inf(1)
 	var minSensor *Sensor
 	userCoordinates := &Coordinates{Latitude: latitude, Longitude: longitude}
@@ -106,29 +113,29 @@ func (s *Server) getNearestSensor(c *gin.Context) {
 // Calculates the great circle distance between two points.
 // The haversine formula assumes points on a perfect sphere
 // (the earth isn't a perfect sphere) so the haversine error
-// can be up to 0.5%
+// can be up to 0.5%.
 func haversine(user, sensor *Coordinates) float64 {
 	userLat, sensorLat := user.Latitude, sensor.Latitude
 	userLon, sensorLon := user.Longitude, sensor.Longitude
 
-	// Distance between latitudes in radians
+	// Distance between latitudes in radians.
 	latDistanceRad := (sensorLat - userLat) * math.Pi / 180
 	lonDistanceRad := (sensorLon - userLon) * math.Pi / 180
 
-	// Latitudes in radians
+	// Latitudes in radians.
 	userLatRad := userLat * math.Pi / 180
 	sensorLatRad := sensorLat * math.Pi / 180
 
-	// Calculate the square of half the chord length between two points 'a'
+	// Calculate the square of half the chord length between two points 'a'.
 	latPower := math.Pow(math.Sin(latDistanceRad/2), 2)
 	lonPower := math.Pow(math.Sin(lonDistanceRad/2), 2)
 	latCosine := math.Cos(userLatRad) * math.Cos(sensorLatRad)
 	a := latPower + lonPower*latCosine
 
-	// Calculate the angular between the two points 'c'
+	// Calculate the angular between the two points 'c'.
 	c := 2 * math.Asin(math.Sqrt(a))
 
-	// In km (...approximately)
+	// In km (...approximately).
 	earthsRadius := 6371
 
 	return float64(earthsRadius) * c
@@ -139,8 +146,8 @@ type Status struct {
 	Uptime string `json:"uptime"`
 }
 
-// Health check for server. Usually It would we
-// should include the server version if there was one
+// Health check for server. Usually we should
+// include the server version if there was one.
 func (s *Server) statusCheck(c *gin.Context) {
 	status := Status{
 		Ok:     s.healthy,
