@@ -69,6 +69,16 @@ func main() {
 					Aliases:  []string{"u"},
 					Required: true,
 				},
+				&cli.StringFlag{
+					Name:     "ingress",
+					Aliases:  []string{"i"},
+					Required: true,
+				},
+				&cli.StringFlag{
+					Name:     "distiller",
+					Aliases:  []string{"d"},
+					Required: true,
+				},
 			},
 		},
 		{
@@ -99,6 +109,16 @@ func main() {
 				&cli.StringFlag{
 					Name:     "unit",
 					Aliases:  []string{"u"},
+					Required: true,
+				},
+				&cli.StringFlag{
+					Name:     "ingress",
+					Aliases:  []string{"i"},
+					Required: true,
+				},
+				&cli.StringFlag{
+					Name:     "distiller",
+					Aliases:  []string{"d"},
 					Required: true,
 				},
 			},
@@ -184,9 +204,13 @@ func listSensors(c *cli.Context) (err error) {
 }
 
 func addSensor(c *cli.Context) (err error) {
-	name, unit := c.String("name"), c.String("unit")
-	lat, lon := c.Float64("lat"), c.Float64("lon")
-	sensor := server.CreateSensor(name, unit, lat, lon)
+	name := c.String("name")
+	unit := c.String("unit")
+	ingress := c.String("ingress")
+	distiller := c.String("distiller")
+	lat := c.Float64("lat")
+	lon := c.Float64("lon")
+	sensor := server.CreateSensor(name, unit, ingress, distiller, lat, lon)
 
 	var responseString string
 	url := c.String("endpoint")
@@ -199,9 +223,13 @@ func addSensor(c *cli.Context) (err error) {
 }
 
 func updateSensor(c *cli.Context) (err error) {
-	name, unit := c.String("name"), c.String("unit")
-	lat, lon := c.Float64("lat"), c.Float64("lon")
-	sensor := server.CreateSensor(name, unit, lat, lon)
+	name := c.String("name")
+	unit := c.String("unit")
+	ingress := c.String("ingress")
+	distiller := c.String("distiller")
+	lat := c.Float64("lat")
+	lon := c.Float64("lon")
+	sensor := server.CreateSensor(name, unit, ingress, distiller, lat, lon)
 
 	var responseString string
 	url := fmt.Sprintf("%s/%s", c.String("endpoint"), name)

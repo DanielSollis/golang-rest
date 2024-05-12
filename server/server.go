@@ -32,8 +32,10 @@ type Coordinates struct {
 }
 
 type SensorTags struct {
-	Unit string `json:"unit"`
-	Name string `json:"name"`
+	Name      string `json:"name"`
+	Unit      string `json:"unit"`
+	Ingress   string `json:"ingress"`
+	Distiller string `json:"distiller"`
 }
 
 func New(addr string) (server *Server, err error) {

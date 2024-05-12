@@ -55,7 +55,7 @@ func (suite *testSuite) TestAddSensor() {
 	suite.testContext.Request.Method = "POST"
 	suite.testContext.Request.Header.Set("Content-Type", "application/json")
 
-	requestSensor := CreateSensor("foo", "bar", 0, 0)
+	requestSensor := CreateSensor("foo", "bar", "baz", "buz", 0, 0)
 	bodyBytes, err := json.Marshal(requestSensor)
 	suite.Nil(err)
 
@@ -79,7 +79,7 @@ func (suite *testSuite) TestUpdateSensor() {
 	suite.testContext.Request.Method = "POST"
 	suite.testContext.Request.Header.Set("Content-Type", "application/json")
 
-	requestSensor := CreateSensor("C1MAG", "amps", 10, 20)
+	requestSensor := CreateSensor("C1MAG", "amps", "florida", "foo", 10, 20)
 	bodyBytes, err := json.Marshal(requestSensor)
 	suite.Nil(err)
 

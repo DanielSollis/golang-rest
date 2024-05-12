@@ -14,6 +14,7 @@ func (s *Server) listSensors(c *gin.Context) {
 	sensors, err := s.db.queryAllSensors()
 	if err != nil {
 		c.IndentedJSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
 	}
 	c.IndentedJSON(http.StatusOK, sensors)
 }
@@ -29,30 +30,36 @@ func (s *Server) addSensor(c *gin.Context) {
 	if err := s.db.insertSensor(
 		newSensor.Name,
 		newSensor.Tags.Unit,
+		newSensor.Tags.Ingress,
+		newSensor.Tags.Distiller,
 		newSensor.Location.Latitude,
 		newSensor.Location.Longitude,
 	); err != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
 	c.IndentedJSON(http.StatusCreated, newSensor)
 }
 
 // Update a sensor already in the database.
 func (s *Server) updateSensor(c *gin.Context) {
-	var toUpdate *Sensor
-	if err := c.BindJSON(&toUpdate); err != nil {
+	var updatedSensor *Sensor
+	if err := c.BindJSON(&updatedSensor); err != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 	if err := s.db.updateSensor(
-		toUpdate.Name,
-		toUpdate.Tags.Unit,
-		toUpdate.Location.Latitude,
-		toUpdate.Location.Longitude,
+		updatedSensor.Name,
+		updatedSensor.Tags.Unit,
+		updatedSensor.Tags.Ingress,
+		updatedSensor.Tags.Distiller,
+		updatedSensor.Location.Latitude,
+		updatedSensor.Location.Longitude,
 	); err != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
-	c.IndentedJSON(http.StatusOK, toUpdate)
+	c.IndentedJSON(http.StatusOK, updatedSensor)
 }
 
 // Query a specific sensor by name.
@@ -75,9 +82,11 @@ func (s *Server) getNearestSensor(c *gin.Context) {
 	var latitude, longitude float64
 	if latitude, err = strconv.ParseFloat(c.Param("lat"), 64); err != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
 	if longitude, err = strconv.ParseFloat(c.Param("lon"), 64); err != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
 
 	// Input validation.
@@ -94,6 +103,7 @@ func (s *Server) getNearestSensor(c *gin.Context) {
 	sensors, err := s.db.queryAllSensors()
 	if err != nil {
 		c.IndentedJSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
 	}
 
 	// Find the nearest sensor.
